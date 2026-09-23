@@ -2,9 +2,9 @@ package com.projet;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 
 public class Main {
     public static void main(String[] args) {
@@ -13,7 +13,7 @@ public class Main {
         String password = "agnila10";// Remplacez par le mot de passe de votre base de données
 
         Connection conn = null;// La connexion vers la base de données
-        Statement stmt = null;// Le statement SQL vers la base de données
+        PreparedStatement pstmt = null;// Le statement SQL vers la base de données
         ResultSet rs = null;// Le résultat de la requête SQL
 
         try {
@@ -29,24 +29,19 @@ public class Main {
             String query = "SELECT * FROM Books";// La requête SQL vers la base de données
             // String queryIn = "INSERT INTO Books (title, author, category, status) "
             // + "VALUES ('Les Misérables', 'Victor Hugo', 'Classique', 'EMPRUNTE')";// La requête SQL vers la base de donnees pour ajouter un livre
-            // String queryUp = "UPDATE Books SET status='DISPONIBLE' WHERE id=5";// La requête SQL vers la base de donnees pour mettre a jour un livre
-            String sqlDl = "DELETE FROM Books WHERE ID = 6";// La requête SQL vers la base de données pour supprimer un livre
-            stmt = conn.createStatement();// Création du statement SQL vers la base de données
+            String queryUp = "UPDATE Books SET title=? WHERE id=?";// La requête SQL vers la base de donnees pour mettre a jour un livre
+          //  String sqlDl = "DELETE FROM Books WHERE ID = ?";// La requête SQL vers la base de données pour supprimer un livre
+            pstmt = conn.prepareStatement(queryUp);// Création du statement SQL vers la base de données
             // boolean status = stmt.execute(queryIn);// Exécuter la requête SQL vers la base de données
             // System.out.println("Execute status: " + status); // Afficher le statut de l'execution de la requête SQL vers la base de données
-            // int rowsUpdate = stmt.executeUpdate(queryUp);// Exécuter la requête SQL vers la base de données
-            int rowsDeleted = stmt.executeUpdate(sqlDl);// Exécuter la requête SQL vers la base de données
-            rs = stmt.executeQuery(query);// Exécuter la requête SQL vers la base de données
-            // System.out.println("Rows Updated: "+rowsUpdate);
-            System.out.println("Rows deleted: " + rowsDeleted);// Afficher le nombre de lignes affectées par la requête SQL vers la base de données
+            pstmt.setString(1, "Pere riche");
+            pstmt.setInt(2, 1);
+            pstmt.executeUpdate();// Exécuter la requête SQL vers la base de données
+            //int rowsDeleted = pstmt.executeUpdate(sqlDl);// Exécuter la requête SQL vers la base de données
+            rs = pstmt.executeQuery(query);// Exécuter la requête SQL vers la base de données
+            //System.out.println("Rows Updated: "+rowsUpdate);
+            //System.out.println("Rows deleted: " + rowsDeleted);// Afficher le nombre de lignes affectées par la requête SQL vers la base de données
 
-            // if (rs.next()) {// Si le resultat de la requête SQL est trouvé
-            // String title = rs.getString("title");// Recupérer le titre du livre
-            // System.out.println("Titre du livre: " + title);// Afficher le titre du livre
-            // } else {
-            // System.out.println("No book found with id = 1");// message de confirmation de
-            // chargement du pilote
-            // }
             while (rs.next()) {
                 System.out.print(rs.getInt(1) + " - ");
                 System.out.print(rs.getString(2) + " - ");
@@ -61,8 +56,8 @@ public class Main {
             try {
                 if (rs != null)
                     rs.close();// Fermeture du resultSet
-                if (stmt != null)
-                    stmt.close();// Fermeture du statement
+                if (pstmt != null)
+                    pstmt.close();// Fermeture du statement
                 if (conn != null && !conn.isClosed()) {// Fermeture de la connexion
                     conn.close();// Fermeture de la connexion
                     System.out.println("Connection closed");// message de confirmation de fermeture de la connexion
