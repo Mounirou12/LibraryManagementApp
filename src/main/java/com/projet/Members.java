@@ -5,6 +5,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.time.LocalDate;
 
 public class Members {
     public static void main(String[] args) {
@@ -23,7 +24,42 @@ public class Members {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             conn = DriverManager.getConnection(url, username, password);
-            System.out.println("Connection established successfully for Members");
+            String queryRD = "SELECT * From Members";
+            /*
+             * String queryCR =
+             * "INSERT INTO Members(firstName,lastName,email,phone,membershipDate,status)"
+             * + " VALUES(?,?,?,?,?,?)";
+             * pstmt.setString(1, "Traore");
+             * pstmt.setString(2, "Amadou");
+             * pstmt.setString(3, "amadoutraore@email.com");
+             * pstmt.setString(4, "+22997676534");
+             * pstmt.setObject(5, LocalDate.now());
+             * pstmt.setString(6, "SUSPENDU");
+             * 
+             * int rowsAffected = pstmt.executeUpdate();
+             * System.out.println("Rows insetrted" + rowsAffected);
+             */
+            String queryUp = "UPDATE Members SET status = ? WHERE id=?";
+            pstmt = conn.prepareStatement(queryUp);
+            pstmt.setString(1, "ACTIF");
+            pstmt.setInt(2, 4);
+            pstmt.executeUpdate();
+
+            String queryDl = "DELETE FROM Members WHERE id = ?";
+            pstmt = conn.prepareStatement(queryDl);
+            pstmt.setInt(1, 5);
+
+            pstmt.executeUpdate();
+            rs = pstmt.executeQuery(queryRD);
+            while (rs.next()) {
+                System.out.print(rs.getInt(1) + " - ");
+                System.out.print(rs.getString(2) + " - ");
+                System.out.print(rs.getString(3) + " - ");
+                System.out.print(rs.getString(4) + " - ");
+                System.out.print(rs.getString(5) + " - ");
+                System.out.print(rs.getDate(6) + " - ");
+                System.out.println(rs.getString(7));
+            }
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
             e.printStackTrace();
