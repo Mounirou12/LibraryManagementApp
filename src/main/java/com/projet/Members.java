@@ -72,7 +72,7 @@ public class Members {
     }
 
     public static void getMemberById(int id) {
-        String sqlRdId = "SELECT id,firstName,lastName,email,phone,membershipDate,status FROM Books WHERE id = ?";
+        String sqlRdId = "SELECT id,firstName,lastName,email,phone,membershipDate,status FROM Members WHERE id = ?";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
@@ -86,7 +86,7 @@ public class Members {
                             + rs.getString(4) + " - "
                             + rs.getString(5) + " - "
                             + rs.getDate(6) + " - "
-                            + rs.getDate(7));
+                            + rs.getString(7));
                 } else {
                     System.out.println("Aucun livre avec l'id " + id);
                 }
@@ -119,10 +119,10 @@ public class Members {
     }
 
     public static void main(String[] args) {
-        insertMember("Camara", "Sefou", "sefoucamara@email.com", "+22997676534", LocalDate.now(), "ACTIF");
-        updateMember(4, "Traore", "Amadou", "amadoutraore@email.com", "+22997676534", LocalDate.now(), "ACTIF");
-        deleteMember(2);
-        getMemberById(3);
+        insertMember("Vincent", "Kompany", "vincentkompany@email.com", "+22990875634", LocalDate.now(), "SUSPENDU");
+        updateMember(4, "Diallo", "Amadou", "amadoutraore@email.com", "+22997676534", LocalDate.now(), "ACTIF");
+        deleteMember(6);
+        getMemberById(8);
         getAllMembers();
     }
 
