@@ -13,7 +13,7 @@ public class Members {
     private static final String PASSWORD = "agnila10";
 
     public static int insertMember(String firstName, String lastName, String email, String phone,
-            LocalDate membershipDate, String status,int year, int month, int day) {
+            LocalDate membershipDate, MemberStatus status,int year, int month, int day) {
                 membershipDate = LocalDate.of(year,month,day);
         String queryCR = "INSERT INTO Members(firstName,lastName,email,phone,membershipDate,status)"
                 + " VALUES(?,?,?,?,?,?)";
@@ -26,7 +26,7 @@ public class Members {
             pstmt.setString(3, email);
             pstmt.setString(4, phone);
             pstmt.setObject(5, membershipDate);
-            pstmt.setString(6, status);
+            pstmt.setString(6, status.name());
             return pstmt.executeUpdate();
 
         } catch (SQLException | ClassNotFoundException e) {
@@ -36,7 +36,7 @@ public class Members {
     }
 
     public static int updateMember(int id, String firstName, String lastName, String email, String phone,
-            LocalDate membershipDate, String status,int year, int month, int day) {
+            LocalDate membershipDate, MemberStatus status,int year, int month, int day) {
                 membershipDate = LocalDate.of(year,month,day);
         String queryUp = "UPDATE Members SET firstName=?,lastName=?,email=?,phone=?,membershipDate=?, status = ? WHERE id=?";
         try {
@@ -48,7 +48,7 @@ public class Members {
             pstmt.setString(3, email);
             pstmt.setString(4, phone);
             pstmt.setObject(5, membershipDate);
-            pstmt.setString(6, status);
+            pstmt.setString(6, status.name());
             pstmt.setInt(7, id);
             return pstmt.executeUpdate();
 
@@ -121,8 +121,8 @@ public class Members {
     }
 
     public static void main(String[] args) {
-        insertMember("Vincent", "Kompany", "vincentkompany@email.com", "+22990875634", LocalDate.now(), "SUSPENDU", 2023, 1, 1);
-        updateMember(4, "Diallo", "Amadou", "amadoutraore@email.com", "+22997676534", LocalDate.now(), "ACTIF", 2023, 1, 1);
+        insertMember("Vincent", "Kompany", "vincentkompany@email.com", "+22990875634", LocalDate.now(), MemberStatus.ACTIF, 2023, 1, 1);
+        updateMember(4, "Diallo", "Amadou", "amadoutraore@email.com", "+22997676534", LocalDate.now(), MemberStatus.SUSPENDU, 2023, 1, 1);
         deleteMember(6);
         getMemberById(8);
         getAllMembers();

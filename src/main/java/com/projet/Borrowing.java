@@ -14,7 +14,7 @@ public class Borrowing {
     private static final String PASSWORD = "agnila10";
 
     public static int insertBorrowing(int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            Locale returnDate, String status, int year, int month, int day) {
+            Locale returnDate, BorrowingStatus status, int year, int month, int day) {
         borrowDate = LocalDate.of(year, month, day);
         dueDate = borrowDate.plusDays(14);
         String queryCR = "INSERT INTO Borrowing(bookId,memberId,borrowDate,dueDate,returnDate,status)"
@@ -28,7 +28,7 @@ public class Borrowing {
             pstmt.setObject(3, borrowDate);
             pstmt.setObject(4, dueDate);
             pstmt.setObject(5, returnDate);
-            pstmt.setString(6, status);
+            pstmt.setString(6, status.name());
             return pstmt.executeUpdate();
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur INSERT Borrowing : " + e.getMessage());
@@ -37,7 +37,7 @@ public class Borrowing {
     }
 
     public static int updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            Locale returnDate, String status, int year, int month, int day) {
+            Locale returnDate, BorrowingStatus status, int year, int month, int day) {
         borrowDate = LocalDate.of(year, month, day);
         dueDate = borrowDate.plusDays(14);
         String queryUp = "UPDATE Borrowing SET bookId=?,memberId=?,borrowDate=?,dueDate=?, returnDate= ?, status = ? WHERE id=?";
@@ -50,7 +50,7 @@ public class Borrowing {
             pstmt.setObject(3, borrowDate);
             pstmt.setObject(4, dueDate);
             pstmt.setObject(5, returnDate);
-            pstmt.setString(6, status);
+            pstmt.setString(6, status.name());
             pstmt.setInt(7, id);
             return pstmt.executeUpdate();
         } catch (SQLException | ClassNotFoundException e) {
@@ -122,8 +122,8 @@ public class Borrowing {
     }
 
     public static void main(String[] args) {
-        insertBorrowing(5, 8, LocalDate.now(), LocalDate.now().plusDays(14), null, "EN_COURS", 2023, 1, 1);
-        updateBorrowing(7, 5, 8, LocalDate.now(), LocalDate.now().plusDays(14), null, "EN_COURS", 2023, 1, 1);
+        insertBorrowing(5, 8, LocalDate.now(), LocalDate.now().plusDays(14), null, BorrowingStatus.EN_COURS, 2023, 1, 1);
+        updateBorrowing(7, 5, 8, LocalDate.now(), LocalDate.now().plusDays(14), null, BorrowingStatus.EN_RETARD, 2023, 1, 1);
        // deleteBorrowing(4);
         //getBorrowingById(4);
         getAllMembers();

@@ -11,7 +11,7 @@ public class Books {
     private static final String USERNAME = "mounir";
     private static final String PASSWORD = "agnila10";
 
-    public static int insertBook(String title, String author, String category, String status) {
+    public static int insertBook(String title, String author, String category, BookStatus status) {
         String queryCR = "INSERT INTO Books (title, author, category, status) "
                 + "VALUES (?,?,?,?)";
         try {
@@ -21,7 +21,7 @@ public class Books {
             pstmt.setString(1, title);
             pstmt.setString(2, author);
             pstmt.setString(3, category);
-            pstmt.setString(4, status);
+            pstmt.setString(4, status.name());
             return pstmt.executeUpdate();
 
         } catch (SQLException | ClassNotFoundException e) {
@@ -30,7 +30,7 @@ public class Books {
         }
     }
 
-    public static int updateBook(int id, String title, String author, String category, String status) {
+    public static int updateBook(int id, String title, String author, String category, BookStatus status) {
         String queryUp = "UPDATE Books SET title=?,author=?,category=?,status=? WHERE id=?";// La requête SQL vers la
                                                                                             // base de donnees pour
                                                                                             // mettre a jour un livre
@@ -41,7 +41,7 @@ public class Books {
             pstmt.setString(1, title);
             pstmt.setString(2, author);
             pstmt.setString(3, category);
-            pstmt.setString(4, status);
+            pstmt.setString(4, status.name());
             pstmt.setInt(5, id);
             return pstmt.executeUpdate();
 
@@ -110,8 +110,8 @@ public class Books {
     }
 
     public static void main(String[] args) {
-        // insertBook("L'Assassin royal", "Robin Hobb", "Fantasy", "DISPONIBLE");
-        // updateBook(5, "Les Misérables", "Victor Hugo", "Classique", "EMPRUNTE");
+        // insertBook("L'Assassin royal", "Robin Hobb", "Fantasy", BookStatus.DISPONIBLE);
+        // updateBook(5, "Les Misérables", "Victor Hugo", "Classique", BookStatus.EMPRUNTE);
         // deleteBook(5);
         getMemberById(1);
         // getAllMembers();
