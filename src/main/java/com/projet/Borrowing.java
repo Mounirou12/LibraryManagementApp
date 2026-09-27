@@ -89,9 +89,27 @@ public class Borrowing {
     }
 
     public static int updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            LocalDate returnDate, BorrowingStatus status, int year, int month, int day) {
+            LocalDate returnDate, int year, int month, int day) {
+        if (!canBorrow(memberId)) {
+            System.out.println("Emprunt refusé : le membre " + memberId
+                    + " n'est pas autorisé (suspendu).");
+            return 0;
+        }
+        if (!isBookAvailable(bookId)) {
+            System.out.println("Emprunt refusé : le livre " + bookId
+                    + " n'est pas disponible.");
+            return 0;
+        }
         borrowDate = LocalDate.of(year, month, day);
         dueDate = borrowDate.plusDays(14);
+        BorrowingStatus status;
+        if (returnDate != null) {
+            status = BorrowingStatus.RETOURNE;
+        } else if (LocalDate.now().isAfter(dueDate)) {
+            status = BorrowingStatus.EN_RETARD;
+        } else {
+            status = BorrowingStatus.EN_COURS;
+        }
         String queryUp = "UPDATE Borrowing SET bookId=?,memberId=?,borrowDate=?,dueDate=?, returnDate= ?, status = ? WHERE id=?";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
