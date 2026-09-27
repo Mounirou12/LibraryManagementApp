@@ -14,9 +14,17 @@ public class Borrowing {
     private static final String PASSWORD = "agnila10";
 
     public static int insertBorrowing(int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            Locale returnDate, BorrowingStatus status, int year, int month, int day) {
+            LocalDate returnDate, int year, int month, int day) {
         borrowDate = LocalDate.of(year, month, day);
         dueDate = borrowDate.plusDays(14);
+        BorrowingStatus status;
+        if (returnDate != null) {
+            status = BorrowingStatus.RETOURNE;
+        } else if (LocalDate.now().isAfter(dueDate)) {
+            status = BorrowingStatus.EN_RETARD;
+        } else {
+            status = BorrowingStatus.EN_COURS;
+        }
         String queryCR = "INSERT INTO Borrowing(bookId,memberId,borrowDate,dueDate,returnDate,status)"
                 + " VALUES(?,?,?,?,?,?)";
         try {
@@ -37,7 +45,7 @@ public class Borrowing {
     }
 
     public static int updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            Locale returnDate, BorrowingStatus status, int year, int month, int day) {
+            LocalDate returnDate, BorrowingStatus status, int year, int month, int day) {
         borrowDate = LocalDate.of(year, month, day);
         dueDate = borrowDate.plusDays(14);
         String queryUp = "UPDATE Borrowing SET bookId=?,memberId=?,borrowDate=?,dueDate=?, returnDate= ?, status = ? WHERE id=?";
@@ -122,12 +130,11 @@ public class Borrowing {
     }
 
     public static void main(String[] args) {
-        insertBorrowing(5, 8, LocalDate.now(), LocalDate.now().plusDays(14), null, BorrowingStatus.EN_COURS, 2023, 1, 1);
-        updateBorrowing(7, 5, 8, LocalDate.now(), LocalDate.now().plusDays(14), null, BorrowingStatus.EN_RETARD, 2023, 1, 1);
-       // deleteBorrowing(4);
-        //getBorrowingById(4);
+        insertBorrowing(4, 8, LocalDate.now(), LocalDate.now().plusDays(14), null, 2023, 1, 1);
+       //updateBorrowing(0, 0, 0, null, null, null, null, 0, 0, 0)    ;    // BorrowingStatus.EN_RETARD, 2023, 1, 1);
+        // deleteBorrowing(4);
+        // getBorrowingById(4);
         getAllMembers();
     }
 
-  
 }
