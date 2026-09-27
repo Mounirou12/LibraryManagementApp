@@ -12,31 +12,53 @@ public class Borrowing {
     private static final String USERNAME = "mounir";
     private static final String PASSWORD = "agnila10";
 
-    public static boolean canBorrow(int memberId){
+    public static boolean canBorrow(int memberId) {
         String sqlRSM = "SELECT status FROM Members WHERE id=?";
-        try (Connection conn = DriverManager.getConnection(URL,USERNAME,PASSWORD);
-        PreparedStatement pstmt = conn.prepareStatement(sqlRSM)){
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(sqlRSM)) {
             pstmt.setInt(1, memberId);
-            try(ResultSet rs = pstmt.executeQuery()){
+            try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    String status = rs.getString("status");
-                    return "ACTIF".equals(status);
+                    return "ACTIF".equals(rs.getString("status"));
                 }
                 return false;
             }
         } catch (SQLException e) {
-            System.out.println("Erreur verification membre:" +e.getMessage());
+            System.out.println("Erreur verification membre:" + e.getMessage());
+            return false;
+        }
+    }
+
+    public static boolean isBookAvailable(int bookId) {
+        String sqlRSBK = "SELECT status FROM Books WHERE id=?";
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(sqlRSBK)) {
+            pstmt.setInt(1, bookId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return "DISPONIBLE".equals(rs.getString("status"));
+                }
+                return false;
+            }
+        } catch (SQLException e) {
+            System.out.println("Erreur vérification livre : " + e.getMessage());
             return false;
         }
     }
 
     public static int insertBorrowing(int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
             LocalDate returnDate, int year, int month, int day) {
-                if (!canBorrow(memberId)) {
-                    System.out.println("Emprunt refusé : le membre " + memberId
-                + " n'est pas autorisé (suspendu).");
-                return 0;
-                }
+        if (!canBorrow(memberId)) {
+            System.out.println("Emprunt refusé : le membre " + memberId
+                    + " n'est pas autorisé (suspendu).");
+            return 0;
+        }
+        if (!isBookAvailable(bookId)) {
+            System.out.println("Emprunt refusé : le livre " + bookId
+                    + " n'est pas disponible.");
+            return 0;
+        }
+
         borrowDate = LocalDate.of(year, month, day);
         dueDate = borrowDate.plusDays(14);
         BorrowingStatus status;
@@ -152,8 +174,9 @@ public class Borrowing {
     }
 
     public static void main(String[] args) {
-        insertBorrowing(3, 9, LocalDate.now(), LocalDate.now().plusDays(14), null, 2024, 12, 23);
-       //updateBorrowing(0, 0, 0, null, null, null, null, 0, 0, 0)    ;    // BorrowingStatus.EN_RETARD, 2023, 1, 1);
+        insertBorrowing(2, 8, LocalDate.now(), LocalDate.now().plusDays(14), null, 2024, 12, 23);
+        // updateBorrowing(0, 0, 0, null, null, null, null, 0, 0, 0) ; //
+        // BorrowingStatus.EN_RETARD, 2023, 1, 1);
         // deleteBorrowing(4);
         // getBorrowingById(4);
         getAllMembers();
