@@ -6,12 +6,12 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 
-public class Books {
+public class Books extends Thread {
     private static final String URL = "jdbc:mysql://127.0.0.1:3306/Librairie";
     private static final String USERNAME = "mounir";
     private static final String PASSWORD = "agnila10";
 
-    public static int insertBook(String title, String author, String category, BookStatus status) {
+    public int insertBook(String title, String author, String category, BookStatus status) {
         String queryCR = "INSERT INTO Books (title, author, category, status) "
                 + "VALUES (?,?,?,?)";
         try {
@@ -30,7 +30,7 @@ public class Books {
         }
     }
 
-    public static int updateBook(int id, String title, String author, String category, BookStatus status) {
+    public int updateBook(int id, String title, String author, String category, BookStatus status) {
         String queryUp = "UPDATE Books SET title=?,author=?,category=?,status=? WHERE id=?";// La requête SQL vers la
                                                                                             // base de donnees pour
                                                                                             // mettre a jour un livre
@@ -108,13 +108,19 @@ public class Books {
         }
 
     }
-
-    public static void main(String[] args) {
-        // insertBook("L'Assassin royal", "Robin Hobb", "Fantasy", BookStatus.DISPONIBLE);
-        // updateBook(5, "Les Misérables", "Victor Hugo", "Classique", BookStatus.EMPRUNTE);
+    @Override
+    public void run() {
+        // insertBook("L'Assassin royal", "Robin Hobb", "Fantasy",
+        // BookStatus.DISPONIBLE);
+        // insertBook("1984", "George Orwell", "Science-Fiction", BookStatus.EMPRUNTE);
+        // insertBook("Harry Potter à l''école des sorciers", "J.K. Rowling", "Fantasy",
+        // BookStatus.RESERVE);
+        // updateBook(1,"L'Assassin royal", "Robin Hobb", "Fantasy",
+        // BookStatus.EMPRUNTE);
         // deleteBook(5);
-        getMemberById(1);
+        //getMemberById(1);
         // getAllMembers();
+
     }
 
 }

@@ -7,14 +7,13 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
-public class Members {
+public class Members extends Thread {
     private static final String URL = "jdbc:mysql://127.0.0.1:3306/Librairie";
     private static final String USERNAME = "mounir";
     private static final String PASSWORD = "agnila10";
 
-    public static int insertMember(String firstName, String lastName, String email, String phone,
-            LocalDate membershipDate, MemberStatus status,int year, int month, int day) {
-                membershipDate = LocalDate.of(year,month,day);
+    public int insertMember(String firstName, String lastName, String email, String phone,
+            LocalDate membershipDate, MemberStatus status) {
         String queryCR = "INSERT INTO Members(firstName,lastName,email,phone,membershipDate,status)"
                 + " VALUES(?,?,?,?,?,?)";
         try {
@@ -35,9 +34,8 @@ public class Members {
         }
     }
 
-    public static int updateMember(int id, String firstName, String lastName, String email, String phone,
-            LocalDate membershipDate, MemberStatus status,int year, int month, int day) {
-                membershipDate = LocalDate.of(year,month,day);
+    public  int updateMember(int id, String firstName, String lastName, String email, String phone,
+            LocalDate membershipDate, MemberStatus status) {
         String queryUp = "UPDATE Members SET firstName=?,lastName=?,email=?,phone=?,membershipDate=?, status = ? WHERE id=?";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -120,11 +118,14 @@ public class Members {
 
     }
 
-    public static void main(String[] args) {
-        insertMember("Vincent", "Kompany", "vincentkompany@email.com", "+22990875634", LocalDate.now(), MemberStatus.ACTIF, 2023, 1, 1);
-        updateMember(4, "Diallo", "Amadou", "amadoutraore@email.com", "+22997676534", LocalDate.now(), MemberStatus.SUSPENDU, 2023, 1, 1);
-        deleteMember(6);
-        getMemberById(8);
-        getAllMembers();
+    @Override
+    public void run() {
+        //insertMember("Vincent", "Kompany", "vincentkompany@email.com", "+22990875634", LocalDate.of(2023, 1, 1),MemberStatus.SUSPENDU);
+        //insertMember("Amadou", "Diallo", "amadou.diallo@email.com", "+22997000001", LocalDate.of(2024, 1, 15),MemberStatus.ACTIF);
+        //updateMember(1, "Vincent", "Kompany", "vincentkompany@email.com", "+22990875634", LocalDate.of(2023, 1, 1), MemberStatus.ACTIF);
+        //deleteMember(6);
+        //getMemberById(8);
+        //getAllMembers();
+
     }
 }

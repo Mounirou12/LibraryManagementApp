@@ -7,7 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
 
-public class Borrowing {
+public class Borrowing extends Thread {
     private static final String URL = "jdbc:mysql://127.0.0.1:3306/Librairie";
     private static final String USERNAME = "mounir";
     private static final String PASSWORD = "agnila10";
@@ -46,8 +46,8 @@ public class Borrowing {
         }
     }
 
-    public static int insertBorrowing(int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            LocalDate returnDate, int year, int month, int day) {
+    public int insertBorrowing(int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
+            LocalDate returnDate) {
         if (!canBorrow(memberId)) {
             System.out.println("Emprunt refusé : le membre " + memberId
                     + " n'est pas autorisé (suspendu).");
@@ -59,8 +59,6 @@ public class Borrowing {
             return 0;
         }
 
-        borrowDate = LocalDate.of(year, month, day);
-        dueDate = borrowDate.plusDays(14);
         BorrowingStatus status;
         if (returnDate != null) {
             status = BorrowingStatus.RETOURNE;
@@ -88,8 +86,8 @@ public class Borrowing {
         }
     }
 
-    public static int updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            LocalDate returnDate, int year, int month, int day) {
+    public  int updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
+            LocalDate returnDate) {
         if (!canBorrow(memberId)) {
             System.out.println("Emprunt refusé : le membre " + memberId
                     + " n'est pas autorisé (suspendu).");
@@ -100,8 +98,6 @@ public class Borrowing {
                     + " n'est pas disponible.");
             return 0;
         }
-        borrowDate = LocalDate.of(year, month, day);
-        dueDate = borrowDate.plusDays(14);
         BorrowingStatus status;
         if (returnDate != null) {
             status = BorrowingStatus.RETOURNE;
@@ -129,7 +125,7 @@ public class Borrowing {
         }
     }
 
-    public static int deleteBorrowing(int id) {
+    public int deleteBorrowing(int id) {
         String queryDl = "DELETE FROM Borrowing WHERE id = ?";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -144,7 +140,7 @@ public class Borrowing {
         }
     }
 
-    public static void getBorrowingById(int id) {
+    public void getBorrowingById(int id) {
         String sqlRdId = "SELECT id,bookId,memberId,borrowDate,dueDate,returnDate,status FROM Borrowing WHERE id = ?";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -169,7 +165,7 @@ public class Borrowing {
         }
     }
 
-    public static void getAllMembers() {
+    public  void getAllMembers() {
         String queryRD = "SELECT * From Borrowing";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -191,13 +187,15 @@ public class Borrowing {
 
     }
 
-    public static void main(String[] args) {
-        insertBorrowing(2, 8, LocalDate.now(), LocalDate.now().plusDays(14), null, 2024, 12, 23);
-        // updateBorrowing(0, 0, 0, null, null, null, null, 0, 0, 0) ; //
-        // BorrowingStatus.EN_RETARD, 2023, 1, 1);
-        // deleteBorrowing(4);
-        // getBorrowingById(4);
-        getAllMembers();
+    @Override
+    public void run() {
+        //insertBorrowing(1, 1, LocalDate.of(2024, 04, 1), LocalDate.of(2024, 04, 1).plusDays(14), null);
+        //insertBorrowing(1, 2, LocalDate.of(2024, 03, 10), LocalDate.of(2024, 03, 10).plusDays(14),LocalDate.of(2024, 03, 22));
+        //updateBorrowing(2, 4, 3, LocalDate.of(2024, 02, 1), LocalDate.of(2024, 02, 1).plusDays(14), LocalDate.of(2024, 02, 22));
+        // deleteBorrowing(1);
+        //getBorrowingById(2);
+        //getAllMembers();
+
     }
 
 }
