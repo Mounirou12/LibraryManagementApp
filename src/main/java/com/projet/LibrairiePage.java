@@ -110,7 +110,7 @@ public class LibrairiePage extends JFrame {
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         right.setBackground(Color.WHITE);
 
-        JTextField search = new JTextField("🔍  Search by title or author");
+        JTextField search = new JTextField("");
         search.setPreferredSize(new Dimension(250, 35));
         search.setForeground(TEXT_GRAY);
         search.setBorder(BorderFactory.createCompoundBorder(
@@ -139,9 +139,6 @@ public class LibrairiePage extends JFrame {
         String[] columns = { "Title", "Author", "Category", "Status", "Actions" };
         Object[][] data = {
                 { "Clean Code", "Robert C. Martin", "Programming", "Available", "" },
-                { "Atomic Habits", "James Clear", "Self Help", "Borrowed", "" },
-                { "Head First Java", "Kathy Sierra", "Programming", "Available", "" },
-                { "The Pragmatic Programmer", "Andrew Hunt", "Software", "Borrowed", "" },
         };
 
         DefaultTableModel model = new DefaultTableModel(data, columns) {
