@@ -147,18 +147,27 @@ public class LibrairiePage extends JFrame {
     }
 
     private JScrollPane createTable() {
-        // Données d'exemple (à remplacer par CrudBooks.getAllBooks())
         String[] columns = { "Title", "Author", "Category", "Status", "Actions" };
-        Object[][] data = {
-                { "Clean Code", "Robert C. Martin", "Programming", "Available", "" },
-        };
 
-        DefaultTableModel model = new DefaultTableModel(data, columns) {
+        // Modèle vide au départ
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column == 4; // seule la colonne Actions est éditable
             }
         };
+
+        // Chargement des données depuis la base
+        for (Book b : Books.getAllMembers()) {
+            model.addRow(new Object[] {
+                    b.getTitle(),
+                    b.getAuthor(),
+                    b.getCategory(),
+                    b.getStatus(),
+                    "" // colonne Actions vide (remplie par le renderer)
+            });
+        }
+
         JTable table = new JTable(model);
         table.setRowHeight(40);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
@@ -168,7 +177,7 @@ public class LibrairiePage extends JFrame {
         table.setSelectionBackground(new Color(0xEF, 0xF6, 0xFF));
         table.setSelectionForeground(TEXT_DARK);
 
-        // Style de l'en-tête
+        // En-tête
         JTableHeader header = table.getTableHeader();
         header.setFont(new Font("Segoe UI", Font.BOLD, 13));
         header.setBackground(new Color(0xF9, 0xFA, 0xFB));
@@ -176,10 +185,8 @@ public class LibrairiePage extends JFrame {
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_GRAY));
         header.setPreferredSize(new Dimension(0, 40));
 
-        // Renderer pour la colonne Status
+        // Renderers
         table.getColumnModel().getColumn(3).setCellRenderer(new StatusRenderer());
-
-        // Renderer/Editor pour la colonne Actions
         table.getColumnModel().getColumn(4).setCellRenderer(new ActionRenderer());
         table.getColumnModel().getColumn(4).setCellEditor(new ActionEditor(table));
 
@@ -206,12 +213,15 @@ public class LibrairiePage extends JFrame {
             label.setHorizontalAlignment(SwingConstants.CENTER);
             label.setFont(new Font("Segoe UI", Font.BOLD, 12));
 
-            if ("Available".equals(value)) {
-                label.setBackground(new Color(0xD1, 0xFA, 0xE5));
-                label.setForeground(GREEN);
-            } else {
-                label.setBackground(new Color(0xFE, 0xF3, 0xC7));
-                label.setForeground(ORANGE);
+            if ("DISPONIBLE".equals(value)) {
+                label.setBackground(new Color(0xD1, 0xFA, 0xE5)); // #D1FAE5
+                label.setForeground(new Color(0x06, 0x5F, 0x46)); // #065F46 (émeraude)
+            } else if ("RESERVE".equals(value)) {
+                label.setBackground(new Color(0xFE, 0xF3, 0xC7)); // #FEF3C7
+                label.setForeground(new Color(0x92, 0x40, 0x0E)); // #92400E (cuivre)
+            } else if ("EMPRUNTE".equals(value)) {
+                label.setBackground(new Color(0xFE, 0xE2, 0xE2)); // #FEE2E2 rouge rosé très clair
+                label.setForeground(new Color(0x99, 0x1B, 0x1B)); // #991B1B rouge bordeaux foncé
             }
 
             if (isSelected) {

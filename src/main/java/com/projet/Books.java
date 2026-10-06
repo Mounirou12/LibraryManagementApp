@@ -5,6 +5,8 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Books extends Thread {
     private static final String URL = "jdbc:mysql://127.0.0.1:3306/Librairie";
@@ -89,25 +91,30 @@ public class Books extends Thread {
         }
     }
 
-    public static void getAllMembers() {
+    public static List<Book> getAllMembers() {
+        List<Book> books = new ArrayList<>();
         String queryRD = "SELECT * From Books";
-        try {
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(queryRD);
+                ResultSet rs = pstmt.executeQuery()) {
+
             Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(queryRD);
-            ResultSet rs = pstmt.executeQuery(queryRD);
             while (rs.next()) {
-                System.out.print(rs.getInt(1) + " - ");
-                System.out.print(rs.getString(2) + " - ");
-                System.out.print(rs.getString(3) + " - ");
-                System.out.print(rs.getString(4) + " - ");
-                System.out.println(rs.getString(5) + " - ");
+                Book b = new Book(
+                        rs.getInt(1),
+                        rs.getString(2),
+                        rs.getString(3),
+                        rs.getString(4),
+                        rs.getString(5));
+                books.add(b);
             }
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur SELECT ALL Books : " + e.getMessage());
         }
+        return books;
 
     }
+
     @Override
     public void run() {
         // insertBook("L'Assassin royal", "Robin Hobb", "Fantasy",
@@ -118,7 +125,7 @@ public class Books extends Thread {
         // updateBook(1,"L'Assassin royal", "Robin Hobb", "Fantasy",
         // BookStatus.EMPRUNTE);
         // deleteBook(5);
-        //getMemberById(1);
+        // getMemberById(1);
         // getAllMembers();
 
     }
