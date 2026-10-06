@@ -41,9 +41,9 @@ public class LibrairiePage extends JFrame {
         sidebar.add(logo);
         sidebar.add(Box.createVerticalStrut(30));
 
-        sidebar.add(createMenuItem("🏠  Dashboard", false));
+        sidebar.add(createMenuItem("🏠  Dashboard", true));
         sidebar.add(Box.createVerticalStrut(5));
-        sidebar.add(createMenuItem("📖  Books", true)); // actif
+        sidebar.add(createMenuItem("📖  Books", false)); // actif
         sidebar.add(Box.createVerticalStrut(5));
         sidebar.add(createMenuItem("👥  Members", false));
         sidebar.add(Box.createVerticalStrut(5));
@@ -101,16 +101,17 @@ public class LibrairiePage extends JFrame {
         header.setBackground(Color.WHITE);
         header.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
 
-        // Titre à gauche
+        // --- Ligne du haut : le titre ---
         JLabel title = new JLabel("Library Books");
         title.setFont(new Font("Segoe UI", Font.BOLD, 22));
         title.setForeground(TEXT_DARK);
 
-        // Zone droite : recherche + bouton Add
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        right.setBackground(Color.WHITE);
+        // --- Ligne du bas : recherche (gauche) + bouton (droite) ---
+        JPanel searchRow = new JPanel(new BorderLayout(10, 0));
+        searchRow.setBackground(Color.WHITE);
+        searchRow.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0)); // petit espace sous le titre
 
-        JTextField search = new JTextField("");
+        PlaceholderTextField search = new PlaceholderTextField("Search by title or author");
         search.setPreferredSize(new Dimension(250, 35));
         search.setForeground(TEXT_GRAY);
         search.setBorder(BorderFactory.createCompoundBorder(
@@ -118,19 +119,30 @@ public class LibrairiePage extends JFrame {
                 BorderFactory.createEmptyBorder(5, 10, 5, 10)));
 
         JButton addBtn = new JButton("+  Add Book");
-        addBtn.setBackground(SIDEBAR_ACTIVE);
-        addBtn.setForeground(Color.WHITE);
+        addBtn.setBackground(Color.blue);
+        addBtn.setForeground(Color.white);
         addBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        addBtn.setRolloverEnabled(false);
+        addBtn.setOpaque(true);
+        addBtn.setContentAreaFilled(true);
         addBtn.setFocusPainted(false);
         addBtn.setBorderPainted(false);
-        addBtn.setPreferredSize(new Dimension(120, 35));
+        addBtn.setPreferredSize(new Dimension(200, 35));
         addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        right.add(search);
-        right.add(addBtn);
+        // Le champ de recherche occupe le centre-gauche, le bouton va à l'extrême
+        // droite
+        JPanel searchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        searchWrapper.setBackground(Color.WHITE);
+        searchWrapper.add(search);
 
-        header.add(title, BorderLayout.WEST);
-        header.add(right, BorderLayout.EAST);
+        searchRow.add(searchWrapper, BorderLayout.WEST);
+        searchRow.add(addBtn, BorderLayout.EAST);
+
+        // --- Assemblage final dans le header ---
+        header.add(title, BorderLayout.NORTH);
+        header.add(searchRow, BorderLayout.CENTER);
+
         return header;
     }
 
@@ -289,6 +301,52 @@ public class LibrairiePage extends JFrame {
         @Override
         public Object getCellEditorValue() {
             return "";
+        }
+    }
+
+    static class PlaceholderTextField extends JTextField {
+
+        private String placeholder;
+
+        public PlaceholderTextField() {
+            super();
+        }
+
+        public PlaceholderTextField(String placeholder) {
+            super();
+            this.placeholder = placeholder;
+        }
+
+        public void setPlaceholder(String placeholder) {
+            this.placeholder = placeholder;
+            repaint();
+        }
+
+        public String getPlaceholder() {
+            return placeholder;
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+
+            if (placeholder == null || placeholder.isEmpty() || !getText().isEmpty()) {
+                return;
+            }
+
+            Graphics2D g2 = (Graphics2D) g.create(); // ⚠️ suppression du cast inutile
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            g2.setColor(getDisabledTextColor());
+            g2.setFont(getFont());
+
+            Insets insets = getInsets();
+            FontMetrics fm = g2.getFontMetrics();
+            int y = insets.top + fm.getAscent()
+                    + (getHeight() - insets.top - insets.bottom - fm.getHeight()) / 2;
+
+            g2.drawString(placeholder, insets.left, y);
+            g2.dispose();
         }
     }
 
