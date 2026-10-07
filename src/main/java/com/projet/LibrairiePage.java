@@ -1,12 +1,15 @@
 package com.projet;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 public class LibrairiePage extends JFrame {
     private static final Color SIDEBAR_BG = new Color(0xE8, 0xF1, 0xFF);
@@ -96,6 +99,23 @@ public class LibrairiePage extends JFrame {
         return main;
     }
 
+    private PlaceholderTextField search; // ⚠️ champ de classe
+    private DefaultTableModel model; // ⚠️ champ de classe
+    private JTable table;
+
+    private void loadBooksIntoModel(List<Book> books) {
+        model.setRowCount(0);
+        for (Book b : books) {
+            model.addRow(new Object[] {
+                    b.getTitle(),
+                    b.getAuthor(),
+                    b.getCategory(),
+                    b.getStatus(),
+                    ""
+            });
+        }
+    }
+
     private JPanel createHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Color.WHITE);
@@ -109,18 +129,51 @@ public class LibrairiePage extends JFrame {
         // --- Ligne du bas : recherche (gauche) + bouton (droite) ---
         JPanel searchRow = new JPanel(new BorderLayout(10, 0));
         searchRow.setBackground(Color.WHITE);
-        searchRow.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0)); // petit espace sous le titre
+        searchRow.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
-        PlaceholderTextField search = new PlaceholderTextField("Search by title or author");
+        search = new PlaceholderTextField("Search by title or author"); // ⚠️ champ de classe
         search.setPreferredSize(new Dimension(250, 35));
-        search.setForeground(TEXT_GRAY);
+        search.setForeground(TEXT_DARK); // ⚠️ TEXT_GRAY était pour le placeholder
         search.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_GRAY, 1, true),
                 BorderFactory.createEmptyBorder(5, 10, 5, 10)));
 
+        // ⚠️ Debounce pour éviter une requête SQL à chaque frappe
+        Timer debounceTimer = new Timer(300, e -> {
+            String texte = search.getText().trim();
+            List<Book> resultats = texte.isEmpty()
+                    ? Books.getAllMembers()
+                    : Books.searchBooks(texte);
+            loadBooksIntoModel(resultats); // ⚠️ met à jour le tableau
+        });
+        debounceTimer.setRepeats(false);
+
+        search.getDocument().addDocumentListener(new DocumentListener() {
+            private void relancer() {
+                if (debounceTimer.isRunning())
+                    debounceTimer.stop();
+                debounceTimer.start();
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                relancer();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                relancer();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                relancer();
+            }
+        });
+
         JButton addBtn = new JButton("+  Add Book");
-        addBtn.setBackground(Color.blue);
-        addBtn.setForeground(Color.white);
+        addBtn.setBackground(Color.BLUE);
+        addBtn.setForeground(Color.WHITE);
         addBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         addBtn.setRolloverEnabled(false);
         addBtn.setOpaque(true);
@@ -130,8 +183,6 @@ public class LibrairiePage extends JFrame {
         addBtn.setPreferredSize(new Dimension(200, 35));
         addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        // Le champ de recherche occupe le centre-gauche, le bouton va à l'extrême
-        // droite
         JPanel searchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         searchWrapper.setBackground(Color.WHITE);
         searchWrapper.add(search);
@@ -139,7 +190,6 @@ public class LibrairiePage extends JFrame {
         searchRow.add(searchWrapper, BorderLayout.WEST);
         searchRow.add(addBtn, BorderLayout.EAST);
 
-        // --- Assemblage final dans le header ---
         header.add(title, BorderLayout.NORTH);
         header.add(searchRow, BorderLayout.CENTER);
 
@@ -150,7 +200,7 @@ public class LibrairiePage extends JFrame {
         String[] columns = { "Title", "Author", "Category", "Status", "Actions" };
 
         // Modèle vide au départ
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+        model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column == 4; // seule la colonne Actions est éditable

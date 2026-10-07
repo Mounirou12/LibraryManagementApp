@@ -115,6 +115,34 @@ public class Books extends Thread {
 
     }
 
+    public static List<Book> searchBooks(String search) {
+        List<Book> books = new ArrayList<>();
+        String querySB = "SELECT * FROM Books "
+                + "WHERE title LIKE CONCAT('%', ?, '%') "
+                + "   OR author LIKE CONCAT('%', ?, '%')";
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(querySB)) {
+     
+
+            pstmt.setString(1, search);
+            pstmt.setString(2, search);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    books.add(new Book(
+                            rs.getInt("id"),
+                            rs.getString("title"),
+                            rs.getString("author"),
+                            rs.getString("category"),
+                            rs.getString("status")));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Erreur recherche : " + e.getMessage());
+        }
+        return books;
+    }
+
     @Override
     public void run() {
         // insertBook("L'Assassin royal", "Robin Hobb", "Fantasy",
