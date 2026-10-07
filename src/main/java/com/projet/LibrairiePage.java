@@ -6,10 +6,14 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
+
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.function.IntConsumer;
 
 public class LibrairiePage extends JFrame {
     private static final Color SIDEBAR_BG = new Color(0xE8, 0xF1, 0xFF);
@@ -116,6 +120,35 @@ public class LibrairiePage extends JFrame {
         }
     }
 
+    private void onEditBook(JTable table, int row) {
+        int bookId = (int) table.getModel().getValueAt(row, 0);
+        String title = (String) table.getModel().getValueAt(row, 1);
+        String author = (String) table.getModel().getValueAt(row, 2);
+        System.out.println("Modifier : ID=" + bookId + ", titre=" + title);
+    }
+
+    private void onDeleteBook(JTable table, int row) {
+        int bookId = (int) table.getModel().getValueAt(row, 0);
+        String title = (String) table.getModel().getValueAt(row, 1);
+
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Supprimer le livre \"" + title + "\" ?",
+                "Confirmation",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            if (Books.deleteBook(bookId)) {
+                loadBooksIntoModel(Books.getAllMembers()); // recharge
+            } else {
+                JOptionPane.showMessageDialog(this,
+                        "Impossible de supprimer ce livre.",
+                        "Erreur", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    }
+
     private JPanel createHeader() {
         JPanel header = new JPanel(new BorderLayout());
         header.setBackground(Color.WHITE);
@@ -208,15 +241,7 @@ public class LibrairiePage extends JFrame {
         };
 
         // Chargement des données depuis la base
-        for (Book b : Books.getAllMembers()) {
-            model.addRow(new Object[] {
-                    b.getTitle(),
-                    b.getAuthor(),
-                    b.getCategory(),
-                    b.getStatus(),
-                    "" // colonne Actions vide (remplie par le renderer)
-            });
-        }
+        loadBooksIntoModel(Books.getAllMembers());
 
         JTable table = new JTable(model);
         table.setRowHeight(40);
@@ -235,10 +260,12 @@ public class LibrairiePage extends JFrame {
         header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_GRAY));
         header.setPreferredSize(new Dimension(0, 40));
 
+        ActionCell actionCell = new ActionCell(row -> onEditBook(table, row), row -> onDeleteBook(table, row));
+
         // Renderers
         table.getColumnModel().getColumn(3).setCellRenderer(new StatusRenderer());
-        table.getColumnModel().getColumn(4).setCellRenderer(new ActionRenderer());
-        table.getColumnModel().getColumn(4).setCellEditor(new ActionEditor(table));
+        table.getColumnModel().getColumn(4).setCellRenderer(actionCell);
+        table.getColumnModel().getColumn(4).setCellEditor(actionCell);
 
         // Largeurs
         table.getColumnModel().getColumn(0).setPreferredWidth(180);
@@ -264,7 +291,7 @@ public class LibrairiePage extends JFrame {
             label.setFont(new Font("Segoe UI", Font.BOLD, 12));
 
             if ("DISPONIBLE".equals(value)) {
-                label.setBackground(new Color(0xD1, 0xFA, 0xE5)); // #D1FAE5
+                label.setBackground(new Color(0xD1, 0xFA, 0xE5)); // #d8d1fa
                 label.setForeground(new Color(0x06, 0x5F, 0x46)); // #065F46 (émeraude)
             } else if ("RESERVE".equals(value)) {
                 label.setBackground(new Color(0xFE, 0xF3, 0xC7)); // #FEF3C7
@@ -287,84 +314,8 @@ public class LibrairiePage extends JFrame {
         }
     }
 
-    static class ActionRenderer extends DefaultTableCellRenderer {
-        @Override
-        public Component getTableCellRendererComponent(JTable table, Object value,
-                boolean isSelected, boolean hasFocus, int row, int column) {
-
-            JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            panel.setBackground(Color.WHITE);
-
-            JButton edit = new JButton("✏️");
-            JButton delete = new JButton("🗑️");
-            for (JButton b : new JButton[] { edit, delete }) {
-                b.setBorderPainted(false);
-                b.setContentAreaFilled(false);
-                b.setFocusPainted(false);
-                b.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            }
-            panel.add(edit);
-            panel.add(delete);
-            return panel;
-        }
-    }
-
-    static class ActionEditor extends DefaultCellEditor {
-        private final JPanel panel;
-        private final JButton edit;
-        private final JButton delete;
-        private int currentRow;
-
-        public ActionEditor(JTable table) {
-            super(new JCheckBox());
-            panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 5));
-            panel.setBackground(Color.WHITE);
-
-            edit = new JButton("✏️");
-            delete = new JButton("🗑️");
-
-            for (JButton b : new JButton[] { edit, delete }) {
-                b.setBorderPainted(false);
-                b.setContentAreaFilled(false);
-                b.setFocusPainted(false);
-                b.setCursor(new Cursor(Cursor.HAND_CURSOR));
-            }
-
-            edit.addActionListener(e -> {
-                fireEditingStopped();
-                JOptionPane.showMessageDialog(null,
-                        "Modifier la ligne " + currentRow);
-                // Ici : ouvrir une fenêtre d'édition
-            });
-
-            delete.addActionListener(e -> {
-                fireEditingStopped();
-                int confirm = JOptionPane.showConfirmDialog(null,
-                        "Supprimer cette ligne ?", "Confirmation",
-                        JOptionPane.YES_NO_OPTION);
-                if (confirm == JOptionPane.YES_OPTION) {
-                    ((DefaultTableModel) table.getModel()).removeRow(currentRow);
-                    // Ici : appeler CrudBooks.deleteBook(id)
-                }
-            });
-            panel.add(edit);
-            panel.add(delete);
-        }
-
-        @Override
-        public Component getTableCellEditorComponent(JTable table, Object value,
-                boolean isSelected, int row, int column) {
-            this.currentRow = row;
-            return panel;
-        }
-
-        @Override
-        public Object getCellEditorValue() {
-            return "";
-        }
-    }
-
-    static class PlaceholderTextField extends JTextField {
+   
+     static class PlaceholderTextField extends JTextField {
 
         private String placeholder;
 
@@ -407,6 +358,84 @@ public class LibrairiePage extends JFrame {
 
             g2.drawString(placeholder, insets.left, y);
             g2.dispose();
+        }
+    }
+
+    static class ActionCell extends AbstractCellEditor
+            implements TableCellEditor, TableCellRenderer {
+
+        private final JPanel panel;
+        private final JButton editBtn;
+        private final JButton deleteBtn;
+        private int currentRow;
+        private final IntConsumer onEdit;
+        private final IntConsumer onDelete;
+
+        public ActionCell(IntConsumer onEdit, IntConsumer onDelete) {
+            this.onEdit = onEdit;
+            this.onDelete = onDelete;
+
+            panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
+            panel.setOpaque(true);
+
+            editBtn = createIconButton("E", new Color(0x3B, 0x82, 0xF6));
+            deleteBtn = createIconButton("X", new Color(0xEF, 0x44, 0x44));
+
+            editBtn.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    fireEditingStopped();
+                    if (onEdit != null)
+                        onEdit.accept(currentRow);
+                }
+            });
+
+            deleteBtn.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    fireEditingStopped();
+                    if (onDelete != null)
+                        onDelete.accept(currentRow);
+                }
+            });
+
+            panel.add(editBtn);
+            panel.add(deleteBtn);
+        }
+
+        private JButton createIconButton(String icon, Color color) {
+            JButton btn = new JButton(icon);
+            btn.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+            btn.setForeground(color);
+            btn.setBackground(Color.WHITE);
+            btn.setBorder(BorderFactory.createEmptyBorder(4, 8, 4, 8));
+            btn.setFocusPainted(false);
+            btn.setContentAreaFilled(false);
+            btn.setRolloverEnabled(false);
+            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+            return btn;
+        }
+
+        // ---------- Renderer ----------
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            return panel;
+        }
+
+        // ---------- Editor ----------
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            this.currentRow = row;
+            panel.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            return panel;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return "";
         }
     }
 

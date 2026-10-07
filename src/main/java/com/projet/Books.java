@@ -53,18 +53,18 @@ public class Books extends Thread {
         }
     }
 
-    public static int deleteBook(int id) {
+    public static boolean deleteBook(int id) {
         String queryDl = "DELETE FROM Books WHERE id = ?";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
             PreparedStatement pstmt = conn.prepareStatement(queryDl);
             pstmt.setInt(1, id);
-            return pstmt.executeUpdate();
+            return pstmt.executeUpdate() >0;
 
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur DELETE Book : " + e.getMessage());
-            return 0;
+            return false;
         }
     }
 
