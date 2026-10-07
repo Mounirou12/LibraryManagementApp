@@ -13,22 +13,21 @@ public class Books extends Thread {
     private static final String USERNAME = "mounir";
     private static final String PASSWORD = "agnila10";
 
-    public int insertBook(String title, String author, String category, BookStatus status) {
-        String queryCR = "INSERT INTO Books (title, author, category, status) "
-                + "VALUES (?,?,?,?)";
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(queryCR);
+    public static boolean insertBook(String title, String author, String category, BookStatus status) {
+        String queryCR = "INSERT INTO Books (title, author, category, status) VALUES (?,?,?,?)";
+
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(queryCR)) {
+
             pstmt.setString(1, title);
             pstmt.setString(2, author);
             pstmt.setString(3, category);
             pstmt.setString(4, status.name());
-            return pstmt.executeUpdate();
+            return pstmt.executeUpdate() > 0;
 
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             System.out.println("Erreur INSERT Book : " + e.getMessage());
-            return 0;
+            return false;
         }
     }
 
@@ -60,7 +59,7 @@ public class Books extends Thread {
             Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
             PreparedStatement pstmt = conn.prepareStatement(queryDl);
             pstmt.setInt(1, id);
-            return pstmt.executeUpdate() >0;
+            return pstmt.executeUpdate() > 0;
 
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur DELETE Book : " + e.getMessage());
@@ -122,7 +121,6 @@ public class Books extends Thread {
                 + "   OR author LIKE CONCAT('%', ?, '%')";
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
                 PreparedStatement pstmt = conn.prepareStatement(querySB)) {
-     
 
             pstmt.setString(1, search);
             pstmt.setString(2, search);

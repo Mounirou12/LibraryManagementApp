@@ -216,6 +216,15 @@ public class LibrairiePage extends JFrame {
         addBtn.setPreferredSize(new Dimension(200, 35));
         addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
+        addBtn.addActionListener(e->{
+            BookDialog dialog = new BookDialog(
+                SwingUtilities.getWindowAncestor(this));
+            dialog.setVisible(true);
+            if (dialog.isSaved()) {
+                loadBooksIntoModel(Books.getAllMembers());
+            }
+        });
+
         JPanel searchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         searchWrapper.setBackground(Color.WHITE);
         searchWrapper.add(search);
@@ -315,7 +324,7 @@ public class LibrairiePage extends JFrame {
     }
 
    
-     static class PlaceholderTextField extends JTextField {
+     public class PlaceholderTextField extends JTextField {
 
         private String placeholder;
 
