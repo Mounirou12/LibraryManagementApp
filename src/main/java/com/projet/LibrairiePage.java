@@ -12,6 +12,7 @@ import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.IntConsumer;
 
@@ -23,6 +24,9 @@ public class LibrairiePage extends JFrame {
     private static final Color BORDER_GRAY = new Color(0xE5, 0xE7, 0xEB);
     private static final Color GREEN = new Color(0x10, 0xB9, 0x81);
     private static final Color ORANGE = new Color(0xF5, 0x9E, 0x0B);
+    private final List<JButton> menuButtons = new ArrayList<>();
+    private JButton activeButton;
+    private JPanel contentArea; // la zone qui change
 
     public LibrairiePage() {
         setTitle("Library Manager-Java");
@@ -37,7 +41,7 @@ public class LibrairiePage extends JFrame {
     private JPanel createSidebar() {
         JPanel sidebar = new JPanel();
         sidebar.setPreferredSize(new Dimension(200, 0));
-        sidebar.setBackground(SIDEBAR_BG);
+        sidebar.setBackground(Color.white);
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
 
@@ -48,50 +52,70 @@ public class LibrairiePage extends JFrame {
         sidebar.add(logo);
         sidebar.add(Box.createVerticalStrut(30));
 
-        sidebar.add(createMenuItem("🏠  Dashboard", true));
+        sidebar.add(createMenuItem("🏠  Dashboard", "dashboard", true));
         sidebar.add(Box.createVerticalStrut(5));
-        sidebar.add(createMenuItem("📖  Books", false)); // actif
+        sidebar.add(createMenuItem("📖  Books", "books", false));
         sidebar.add(Box.createVerticalStrut(5));
-        sidebar.add(createMenuItem("👥  Members", false));
+        sidebar.add(createMenuItem("👥  Members", "members", false));
         sidebar.add(Box.createVerticalStrut(5));
-        sidebar.add(createMenuItem("🔖  Borrowing", false));
-
+        sidebar.add(createMenuItem("🔖  Borrowing", "borrowing", false));
         sidebar.add(Box.createVerticalGlue());
         return sidebar;
     }
 
-    private JButton createMenuItem(String text, boolean active) {
+    private JButton createMenuItem(String text, String pageKey, boolean active) {
         JButton btn = new JButton(text);
-        btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
         btn.setHorizontalAlignment(SwingConstants.LEFT);
-        btn.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        btn.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+        btn.setForeground(TEXT_DARK);
+        btn.setBackground(Color.WHITE);
+        btn.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
         btn.setFocusPainted(false);
+        btn.setContentAreaFilled(true);
         btn.setBorderPainted(false);
-        btn.setOpaque(true);
+        btn.setRolloverEnabled(false);
         btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-        if (active) {
-            btn.setBackground(SIDEBAR_ACTIVE);
-            btn.setForeground(Color.WHITE);
-        } else {
-            btn.setBackground(SIDEBAR_BG);
-            btn.setForeground(TEXT_DARK);
-        }
-        btn.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (!active)
-                    btn.setBackground(new Color(0xD6, 0xE4, 0xFA));
-            }
+        menuButtons.add(btn);
+        if (active)
+            activeButton = btn;
 
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (!active)
-                    btn.setBackground(SIDEBAR_BG);
-            }
+        btn.addActionListener(e -> {
+            setActiveButton(btn);
+           // showPage(pageKey);
         });
+
         return btn;
     }
+
+    private void setActiveButton(JButton button) {
+        if (button == activeButton)
+            return;
+
+        if (activeButton != null) {
+            activeButton.setBackground(Color.WHITE);
+            activeButton.setForeground(TEXT_GRAY);
+        }
+
+        button.setBackground(SIDEBAR_ACTIVE);
+        button.setForeground(TEXT_DARK);
+
+        activeButton = button;
+    }
+
+   /*  private void showPage(String pageKey) {
+        contentArea.removeAll();
+
+        switch (pageKey) {
+            case "dashboard" -> contentArea.add(LibrairiePage(), BorderLayout.CENTER);
+            case "books" -> contentArea.add(createBooksPage(), BorderLayout.CENTER);
+            case "members" -> contentArea.add(createMembersPage(), BorderLayout.CENTER);
+            case "borrowing" -> contentArea.add(createBorrowingPage(), BorderLayout.CENTER);
+        }
+
+        contentArea.revalidate();
+        contentArea.repaint();
+    } */
 
     private JPanel createMainPanel() {
         JPanel main = new JPanel(new BorderLayout());
