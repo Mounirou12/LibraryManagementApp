@@ -301,10 +301,10 @@ public class LibrairiePage extends JFrame {
 
             if ("DISPONIBLE".equals(value)) {
                 label.setBackground(new Color(0xD1, 0xFA, 0xE5)); // #d8d1fa
-                label.setForeground(new Color(0x06, 0x5F, 0x46)); // #065F46 (émeraude)
+                label.setForeground(GREEN); // #065F46 (émeraude)
             } else if ("RESERVE".equals(value)) {
                 label.setBackground(new Color(0xFE, 0xF3, 0xC7)); // #FEF3C7
-                label.setForeground(new Color(0x92, 0x40, 0x0E)); // #92400E (cuivre)
+                label.setForeground(ORANGE); // #92400E (cuivre)
             } else if ("EMPRUNTE".equals(value)) {
                 label.setBackground(new Color(0xFE, 0xE2, 0xE2)); // #FEE2E2 rouge rosé très clair
                 label.setForeground(new Color(0x99, 0x1B, 0x1B)); // #991B1B rouge bordeaux foncé
