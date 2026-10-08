@@ -4,16 +4,20 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-public class BookDialog extends JDialog {
+public class BookUpdateDialog extends JDialog {
 
     private JTextField titleField;
     private JTextField authorField;
     private JComboBox<String> categoryBox;
     private JComboBox<BookStatus> statusBox;
-    private boolean saved = false;
 
-    public BookDialog(Window owner) {
-        super(owner, "Ajouter un livre", Dialog.ModalityType.APPLICATION_MODAL);
+    private boolean saved = false;
+    private final Book book;
+
+    public BookUpdateDialog(Window owner, Book book) {
+        super(owner, "Modifier le livre", Dialog.ModalityType.APPLICATION_MODAL);
+        this.book = book;
+
         setSize(450, 420);
         setLocationRelativeTo(owner);
         setResizable(false);
@@ -23,14 +27,14 @@ public class BookDialog extends JDialog {
         content.setBackground(Color.WHITE);
         content.setBorder(new EmptyBorder(25, 30, 25, 30));
 
-        // --- Titre de la fenêtre ---
-        JLabel header = new JLabel("Nouveau livre");
+        // --- Header ---
+        JLabel header = new JLabel("Modifier le livre");
         header.setFont(new Font("Segoe UI", Font.BOLD, 20));
         header.setForeground(new Color(0x1F, 0x29, 0x37));
         header.setAlignmentX(Component.LEFT_ALIGNMENT);
         content.add(header);
 
-        JLabel sub = new JLabel("Remplissez les informations ci-dessous");
+        JLabel sub = new JLabel("Modifiez les informations puis enregistrez");
         sub.setFont(new Font("Segoe UI", Font.PLAIN, 12));
         sub.setForeground(new Color(0x6B, 0x72, 0x80));
         sub.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -39,14 +43,16 @@ public class BookDialog extends JDialog {
         content.add(Box.createVerticalStrut(20));
 
         // --- Champs ---
-        titleField = new JTextField();
-        authorField = new JTextField();
+        titleField = new JTextField(book.getTitle());
+        authorField = new JTextField(book.getAuthor());
+
         categoryBox = new JComboBox<>(new String[] {
                 "Programming", "Roman", "Science", "Histoire", "Art", "Autre"
         });
-        statusBox = new JComboBox<>(new BookStatus[] {
-                BookStatus.DISPONIBLE, BookStatus.EMPRUNTE, BookStatus.RESERVE
-        });
+        categoryBox.setSelectedItem(book.getCategory());
+
+        statusBox = new JComboBox<>(BookStatus.values());
+        statusBox.setSelectedItem(book.getStatus());
 
         content.add(createField("Titre", titleField));
         content.add(Box.createVerticalStrut(12));
@@ -74,7 +80,7 @@ public class BookDialog extends JDialog {
         cancelBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
         cancelBtn.addActionListener(e -> dispose());
 
-        JButton saveBtn = new JButton("Enregistrer");
+        JButton saveBtn = new JButton("Mettre à jour");
         saveBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         saveBtn.setFocusPainted(false);
         saveBtn.setBackground(new Color(0x3B, 0x82, 0xF6));
@@ -85,7 +91,6 @@ public class BookDialog extends JDialog {
 
         buttons.add(cancelBtn);
         buttons.add(saveBtn);
-
         content.add(buttons);
 
         setContentPane(content);
@@ -123,7 +128,7 @@ public class BookDialog extends JDialog {
     private void onSave() {
         String title = titleField.getText().trim();
         String author = authorField.getText().trim();
-        String category = (String) categoryBox.getSelectedItem();
+        String category = categoryBox.getSelectedItem().toString();
         BookStatus status = (BookStatus) statusBox.getSelectedItem();
 
         if (title.isEmpty() || author.isEmpty()) {
@@ -134,12 +139,12 @@ public class BookDialog extends JDialog {
             return;
         }
 
-        if (Books.insertBook(title, author, category, status)) {
+        if (Books.updateBook(book.getId(), title, author, category, status)) {
             saved = true;
             dispose();
         } else {
             JOptionPane.showMessageDialog(this,
-                    "Impossible d'ajouter le livre.",
+                    "Impossible de mettre à jour le livre.",
                     "Erreur",
                     JOptionPane.ERROR_MESSAGE);
         }

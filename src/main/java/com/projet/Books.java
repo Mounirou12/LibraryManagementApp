@@ -31,7 +31,7 @@ public class Books extends Thread {
         }
     }
 
-    public int updateBook(int id, String title, String author, String category, BookStatus status) {
+    public static boolean updateBook(int id, String title, String author, String category, BookStatus status) {
         String queryUp = "UPDATE Books SET title=?,author=?,category=?,status=? WHERE id=?";// La requête SQL vers la
                                                                                             // base de donnees pour
                                                                                             // mettre a jour un livre
@@ -44,11 +44,11 @@ public class Books extends Thread {
             pstmt.setString(3, category);
             pstmt.setString(4, status.name());
             pstmt.setInt(5, id);
-            return pstmt.executeUpdate();
+            return pstmt.executeUpdate() > 0;
 
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur UPDATE Book : " + e.getMessage());
-            return 0;
+            return false;
         }
     }
 

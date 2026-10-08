@@ -86,7 +86,7 @@ public class Borrowing extends Thread {
         }
     }
 
-    public  int updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
+    public int updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
             LocalDate returnDate) {
         if (!canBorrow(memberId)) {
             System.out.println("Emprunt refusé : le membre " + memberId
@@ -165,7 +165,7 @@ public class Borrowing extends Thread {
         }
     }
 
-    public  void getAllMembers() {
+    public void getAllMembers() {
         String queryRD = "SELECT * From Borrowing";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -189,12 +189,15 @@ public class Borrowing extends Thread {
 
     @Override
     public void run() {
-        //insertBorrowing(1, 1, LocalDate.of(2024, 04, 1), LocalDate.of(2024, 04, 1).plusDays(14), null);
-        //insertBorrowing(1, 2, LocalDate.of(2024, 03, 10), LocalDate.of(2024, 03, 10).plusDays(14),LocalDate.of(2024, 03, 22));
-        //updateBorrowing(2, 4, 3, LocalDate.of(2024, 02, 1), LocalDate.of(2024, 02, 1).plusDays(14), LocalDate.of(2024, 02, 22));
+        // insertBorrowing(1, 1, LocalDate.of(2024, 04, 1), LocalDate.of(2024, 04,
+        // 1).plusDays(14), null);
+        // insertBorrowing(1, 2, LocalDate.of(2024, 03, 10), LocalDate.of(2024, 03,
+        // 10).plusDays(14),LocalDate.of(2024, 03, 22));
+        // updateBorrowing(2, 4, 3, LocalDate.of(2024, 02, 1), LocalDate.of(2024, 02,
+        // 1).plusDays(14), LocalDate.of(2024, 02, 22));
         // deleteBorrowing(1);
-        //getBorrowingById(2);
-        //getAllMembers();
+        // getBorrowingById(2);
+        // getAllMembers();
 
     }
 
