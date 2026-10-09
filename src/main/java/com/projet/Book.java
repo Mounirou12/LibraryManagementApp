@@ -5,9 +5,9 @@ public class Book {
     private String title;
     private String author;
     private String category;
-    private String status;
+    private BookStatus status;
 
-    public Book(int id, String title, String author, String category, String status) {
+    public Book(int id, String title, String author, String category, BookStatus status) {
         this.id = id;
         this.title = title;
         this.author = author;
@@ -31,7 +31,7 @@ public class Book {
         return category;
     }
 
-    public String getStatus() {
+    public BookStatus getStatus() {
         return status;
     }
 

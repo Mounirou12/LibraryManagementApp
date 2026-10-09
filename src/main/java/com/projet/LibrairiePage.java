@@ -27,6 +27,7 @@ public class LibrairiePage extends JFrame {
     private final List<JButton> menuButtons = new ArrayList<>();
     private JButton activeButton;
     private JPanel contentArea; // la zone qui change
+    private CardLayout cardLayout;
 
     public LibrairiePage() {
         setTitle("Library Manager-Java");
@@ -34,8 +35,20 @@ public class LibrairiePage extends JFrame {
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
+
+        cardLayout = new CardLayout();
+        contentArea = new JPanel(cardLayout);
+        contentArea.setBackground(Color.WHITE);
+
+        contentArea.add(createDashboardPage(), "dashboard");
+        contentArea.add(createBooksPage(), "books");
+        contentArea.add(createTable(), "members");
+        contentArea.add(createTable(), "borrowing");
         add(createSidebar(), BorderLayout.WEST);
-        add(createMainPanel(), BorderLayout.CENTER);
+        add(contentArea, BorderLayout.CENTER);
+
+        // ⚠️ 4. Page par défaut
+        showPage("dashboard");
     }
 
     private JPanel createSidebar() {
@@ -82,7 +95,7 @@ public class LibrairiePage extends JFrame {
 
         btn.addActionListener(e -> {
             setActiveButton(btn);
-           // showPage(pageKey);
+            showPage(pageKey);
         });
 
         return btn;
@@ -103,65 +116,68 @@ public class LibrairiePage extends JFrame {
         activeButton = button;
     }
 
-   /*  private void showPage(String pageKey) {
-        contentArea.removeAll();
-
-        switch (pageKey) {
-            case "dashboard" -> contentArea.add(LibrairiePage(), BorderLayout.CENTER);
-            case "books" -> contentArea.add(createBooksPage(), BorderLayout.CENTER);
-            case "members" -> contentArea.add(createMembersPage(), BorderLayout.CENTER);
-            case "borrowing" -> contentArea.add(createBorrowingPage(), BorderLayout.CENTER);
-        }
-
-        contentArea.revalidate();
-        contentArea.repaint();
-    } */
-
-    private JPanel createMainPanel() {
-        JPanel main = new JPanel(new BorderLayout());
-        main.setBackground(Color.WHITE);
-        main.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
-
-        main.add(createHeader(), BorderLayout.NORTH);
-        main.add(createTable(), BorderLayout.CENTER);
-        return main;
+    private void showPage(String pageKey) {
+        if (contentArea == null)
+            return;
+        cardLayout.show(contentArea, pageKey);
     }
 
     private PlaceholderTextField search; // ⚠️ champ de classe
+    private PlaceholderTextField dashboardSearch;
+    private PlaceholderTextField booksSearch;
     private DefaultTableModel model; // ⚠️ champ de classe
+    private DefaultTableModel dashboardModel;
+    private DefaultTableModel booksModel; // ⚠️ champ de classe
+    private Timer booksDebounceTimer;
+    private Timer dashboardDebounceTimer;
+
     private JTable table;
 
     private void loadBooksIntoModel(List<Book> books) {
-        model.setRowCount(0);
+        booksModel.setRowCount(0); // ⚠️ booksModel (camelCase)
         for (Book b : books) {
-            model.addRow(new Object[] {
+            booksModel.addRow(new Object[] {
                     b.getId(),
                     b.getTitle(),
                     b.getAuthor(),
                     b.getCategory(),
                     b.getStatus(),
-                    "",
-                    ""
+                    "", // Edit
+                    "" // Delete
+            });
+        }
+    }
+
+    private void loadDashboardData(List<Book> books) {
+        dashboardModel.setRowCount(0);
+        for (Book b : books) {
+            dashboardModel.addRow(new Object[] {
+                    b.getId(),
+                    b.getTitle(),
+                    b.getAuthor(),
+                    b.getCategory(),
+                    b.getStatus(),
             });
         }
     }
 
     private void onEditBook(JTable table, int row) {
         int bookId = asInt(table.getModel().getValueAt(row, 0));
-        String title = (String) table.getModel().getValueAt(row, 1);
-        String author = (String) table.getModel().getValueAt(row, 2);
-        String category = (String) table.getModel().getValueAt(row, 3);
+        String title = table.getModel().getValueAt(row, 1).toString();
+        String author = table.getModel().getValueAt(row, 2).toString();
+        String category = table.getModel().getValueAt(row, 3).toString();
 
         BookStatus status = BookStatus.valueOf(
                 table.getModel().getValueAt(row, 4).toString());
 
-        Book book = new Book(bookId, title, author, category, category);
+        Book book = new Book(bookId, title, author, category, status);
         BookUpdateDialog dialog = new BookUpdateDialog(
                 SwingUtilities.getWindowAncestor(this), book);
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
             loadBooksIntoModel(Books.getAllMembers());
+            loadDashboardData(Books.getAllMembers());
         }
 
     }
@@ -176,6 +192,7 @@ public class LibrairiePage extends JFrame {
 
         if (confirm == JOptionPane.YES_OPTION && Books.deleteBook(bookId)) {
             loadBooksIntoModel(Books.getAllMembers());
+            loadDashboardData(Books.getAllMembers());
         }
     }
 
@@ -202,32 +219,42 @@ public class LibrairiePage extends JFrame {
         title.setForeground(TEXT_DARK);
 
         // --- Ligne du bas : recherche (gauche) + bouton (droite) ---
+
+        header.add(title, BorderLayout.WEST);
+
+        return header;
+    }
+
+    private JPanel createToolbarDashboard() {
+        JPanel toolbar = new JPanel(new BorderLayout(10, 0));
+        toolbar.setBackground(Color.WHITE);
+        toolbar.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
         JPanel searchRow = new JPanel(new BorderLayout(10, 0));
         searchRow.setBackground(Color.WHITE);
         searchRow.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
 
-        search = new PlaceholderTextField("Search by title or author"); // ⚠️ champ de classe
-        search.setPreferredSize(new Dimension(250, 35));
-        search.setForeground(TEXT_DARK); // ⚠️ TEXT_GRAY était pour le placeholder
-        search.setBorder(BorderFactory.createCompoundBorder(
+        dashboardSearch = new PlaceholderTextField("Search by title or author"); // ⚠️ champ de classe
+        dashboardSearch.setPreferredSize(new Dimension(250, 35));
+        dashboardSearch.setForeground(TEXT_DARK); // ⚠️ TEXT_GRAY était pour le placeholder
+        dashboardSearch.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createLineBorder(BORDER_GRAY, 1, true),
                 BorderFactory.createEmptyBorder(5, 10, 5, 10)));
 
         // ⚠️ Debounce pour éviter une requête SQL à chaque frappe
-        Timer debounceTimer = new Timer(300, e -> {
-            String texte = search.getText().trim();
+        dashboardDebounceTimer = new Timer(300, e -> {
+            String texte = dashboardSearch.getText().trim();
             List<Book> resultats = texte.isEmpty()
                     ? Books.getAllMembers()
                     : Books.searchBooks(texte);
-            loadBooksIntoModel(resultats); // ⚠️ met à jour le tableau
+            loadDashboardData(resultats); // ⚠️ met à jour le tableau
         });
-        debounceTimer.setRepeats(false);
+        dashboardDebounceTimer.setRepeats(false);
 
-        search.getDocument().addDocumentListener(new DocumentListener() {
+        dashboardSearch.getDocument().addDocumentListener(new DocumentListener() {
             private void relancer() {
-                if (debounceTimer.isRunning())
-                    debounceTimer.stop();
-                debounceTimer.start();
+                if (dashboardDebounceTimer.isRunning())
+                    dashboardDebounceTimer.stop();
+                dashboardDebounceTimer.start();
             }
 
             @Override
@@ -246,8 +273,66 @@ public class LibrairiePage extends JFrame {
             }
         });
 
+        JPanel searchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        searchWrapper.setBackground(Color.WHITE);
+        searchWrapper.add(dashboardSearch);
+
+        toolbar.add(searchWrapper, BorderLayout.CENTER);
+        return toolbar;
+
+    }
+
+    private JPanel createToolbar() {
+        JPanel toolbar = new JPanel(new BorderLayout(10, 0));
+        toolbar.setBackground(Color.WHITE);
+        toolbar.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+        JPanel searchRow = new JPanel(new BorderLayout(10, 0));
+        searchRow.setBackground(Color.WHITE);
+        searchRow.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+        // --- Champ de recherche (gauche) ---
+        booksSearch = new PlaceholderTextField("Search by title or author");
+        booksSearch.setPreferredSize(new Dimension(250, 35));
+        booksSearch.setForeground(TEXT_DARK);
+        booksSearch.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_GRAY, 1, true),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+
+        booksDebounceTimer = new Timer(300, e -> {
+            String texte = booksSearch.getText().trim();
+            List<Book> resultats = texte.isEmpty()
+                    ? Books.getAllMembers()
+                    : Books.searchBooks(texte);
+            loadBooksIntoModel(resultats);
+        });
+        booksDebounceTimer.setRepeats(false);
+
+        booksSearch.getDocument().addDocumentListener(new DocumentListener() {
+            private void relancer() {
+                if (booksDebounceTimer.isRunning())
+                    booksDebounceTimer.stop();
+                booksDebounceTimer.start();
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                relancer();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                relancer();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                relancer();
+            }
+        });
+
+        // --- Bouton Add (droite) ---
         JButton addBtn = new JButton("+  Add Book");
-        addBtn.setBackground(Color.BLUE);
+        addBtn.setBackground(new Color(0x3B, 0x82, 0xF6));
         addBtn.setForeground(Color.WHITE);
         addBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
         addBtn.setRolloverEnabled(false);
@@ -255,7 +340,7 @@ public class LibrairiePage extends JFrame {
         addBtn.setContentAreaFilled(true);
         addBtn.setFocusPainted(false);
         addBtn.setBorderPainted(false);
-        addBtn.setPreferredSize(new Dimension(200, 35));
+        addBtn.setPreferredSize(new Dimension(150, 35));
         addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         addBtn.addActionListener(e -> {
@@ -267,17 +352,54 @@ public class LibrairiePage extends JFrame {
             }
         });
 
+        // --- Assemblage ---
         JPanel searchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
         searchWrapper.setBackground(Color.WHITE);
-        searchWrapper.add(search);
+        searchWrapper.add(booksSearch);
 
-        searchRow.add(searchWrapper, BorderLayout.WEST);
-        searchRow.add(addBtn, BorderLayout.EAST);
+        toolbar.add(searchWrapper, BorderLayout.WEST);
+        toolbar.add(addBtn, BorderLayout.EAST);
+        return toolbar;
+    }
 
-        header.add(title, BorderLayout.NORTH);
-        header.add(searchRow, BorderLayout.CENTER);
+    private JPanel createDashboardPage() {
+        JPanel page = new JPanel(new BorderLayout());
+        page.setBackground(Color.WHITE);
+        page.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        return header;
+        JScrollPane tableScroll = tableDashboard();
+
+        JPanel top = new JPanel();
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        top.setBackground(Color.WHITE);
+        top.add(createHeader());
+        top.add(createToolbarDashboard(), BorderLayout.CENTER);
+
+        page.add(top, BorderLayout.NORTH);
+        page.add(tableScroll, BorderLayout.CENTER);
+
+        return page;
+    }
+
+    private JPanel createBooksPage() {
+        JPanel page = new JPanel(new BorderLayout());
+        page.setBackground(Color.WHITE);
+        page.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // ⚠️ 1. Créer la table EN PREMIER (initialise booksModel)
+        JScrollPane tableScroll = createTable();
+
+        // ⚠️ 2. Ensuite créer la toolbar (utilise booksModel)
+        JPanel top = new JPanel();
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        top.setBackground(Color.WHITE);
+        top.add(createHeader());
+        top.add(createToolbar());
+
+        page.add(top, BorderLayout.NORTH);
+        page.add(tableScroll, BorderLayout.CENTER);
+
+        return page;
     }
 
     static class EditRenderer extends JButton implements TableCellRenderer {
@@ -412,11 +534,62 @@ public class LibrairiePage extends JFrame {
         }
     }
 
+    private JScrollPane tableDashboard() {
+        String[] columns = { "ID", "Title", "Author", "Category", "Status" };
+
+        // Modèle vide au départ
+        dashboardModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        // Chargement des données depuis la base
+        loadDashboardData(Books.getAllMembers());
+
+        JTable table = new JTable(dashboardModel);
+        table.setRowHeight(40);
+        table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
+        table.setForeground(TEXT_DARK);
+        table.setGridColor(BORDER_GRAY);
+        table.setShowVerticalLines(false);
+        table.setSelectionBackground(new Color(0xEF, 0xF6, 0xFF));
+        table.setSelectionForeground(TEXT_DARK);
+
+        // En-tête
+        JTableHeader header = table.getTableHeader();
+        header.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        header.setBackground(new Color(0xF9, 0xFA, 0xFB));
+        header.setForeground(TEXT_GRAY);
+        header.setBorder(BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_GRAY));
+        header.setPreferredSize(new Dimension(0, 40));
+
+        // ⚠️ Masquer la colonne ID
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
+
+        // Renderers
+        table.getColumnModel().getColumn(4).setCellRenderer(new StatusRenderer());
+
+        // Largeurs
+        table.getColumnModel().getColumn(1).setPreferredWidth(180);
+        table.getColumnModel().getColumn(2).setPreferredWidth(160);
+        table.getColumnModel().getColumn(3).setPreferredWidth(100);
+        table.getColumnModel().getColumn(4).setPreferredWidth(120);
+
+        JScrollPane scroll = new JScrollPane(table);
+        scroll.setBorder(BorderFactory.createLineBorder(BORDER_GRAY));
+        scroll.getViewport().setBackground(Color.WHITE);
+        return scroll;
+    }
+
     private JScrollPane createTable() {
         String[] columns = { "ID", "Title", "Author", "Category", "Status", "Edit", "Delete" };
 
         // Modèle vide au départ
-        model = new DefaultTableModel(columns, 0) {
+        booksModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return column == 5 || column == 6; // seule la colonne Actions est éditable
@@ -426,7 +599,7 @@ public class LibrairiePage extends JFrame {
         // Chargement des données depuis la base
         loadBooksIntoModel(Books.getAllMembers());
 
-        JTable table = new JTable(model);
+        JTable table = new JTable(booksModel);
         table.setRowHeight(40);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         table.setForeground(TEXT_DARK);
@@ -476,32 +649,55 @@ public class LibrairiePage extends JFrame {
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
 
-            JLabel label = new JLabel(value.toString());
+            // ⚠️ Normaliser en BookStatus
+            BookStatus status;
+            if (value instanceof BookStatus) {
+                status = (BookStatus) value;
+            } else if (value != null) {
+                status = BookStatus.fromString(value.toString());
+            } else {
+                status = BookStatus.DISPONIBLE;
+            }
+
+            // Créer le label
+            JLabel label = new JLabel(status.getLabel());
             label.setOpaque(true);
             label.setHorizontalAlignment(SwingConstants.CENTER);
             label.setFont(new Font("Segoe UI", Font.BOLD, 12));
+            label.setBorder(BorderFactory.createEmptyBorder(4, 12, 4, 12));
 
-            if ("DISPONIBLE".equals(value)) {
-                label.setBackground(new Color(0xD1, 0xFA, 0xE5)); // #d8d1fa
-                label.setForeground(GREEN); // #065F46 (émeraude)
-            } else if ("RESERVE".equals(value)) {
-                label.setBackground(new Color(0xFE, 0xF3, 0xC7)); // #FEF3C7
-                label.setForeground(ORANGE); // #92400E (cuivre)
-            } else if ("EMPRUNTE".equals(value)) {
-                label.setBackground(new Color(0xFE, 0xE2, 0xE2)); // #FEE2E2 rouge rosé très clair
-                label.setForeground(new Color(0x99, 0x1B, 0x1B)); // #991B1B rouge bordeaux foncé
+            // Couleurs selon le statut
+            Color bg, fg;
+            switch (status) {
+                case DISPONIBLE -> {
+                    bg = new Color(0xD1, 0xFA, 0xE5);
+                    fg = new Color(0x06, 0x5F, 0x46);
+                }
+                case RESERVE -> {
+                    bg = new Color(0xFE, 0xF3, 0xC7);
+                    fg = new Color(0x92, 0x40, 0x0E);
+                }
+                case EMPRUNTE -> {
+                    bg = new Color(0xFE, 0xE2, 0xE2);
+                    fg = new Color(0x99, 0x1B, 0x1B);
+                }
+                default -> {
+                    bg = Color.WHITE;
+                    fg = Color.BLACK;
+                }
             }
 
+            // Sélection : assombrir légèrement
             if (isSelected) {
-                label.setBackground(label.getBackground().darker());
+                bg = bg.darker();
             }
 
-            // Encapsuler dans un JPanel pour ajouter une marge
-            JPanel wrap = new JPanel(new BorderLayout());
-            wrap.setBackground(Color.WHITE);
-            wrap.setBorder(BorderFactory.createEmptyBorder(6, 20, 6, 20));
-            wrap.add(label, BorderLayout.CENTER);
-            return wrap;
+            label.setBackground(bg);
+            label.setForeground(fg);
+
+            // ⚠️ Pas de wrap JPanel : on retourne le label directement
+            // pour que la sélection fonctionne correctement
+            return label;
         }
     }
 

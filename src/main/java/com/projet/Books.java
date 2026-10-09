@@ -104,7 +104,7 @@ public class Books extends Thread {
                         rs.getString(2),
                         rs.getString(3),
                         rs.getString(4),
-                        rs.getString(5));
+                    BookStatus.fromString(rs.getString(5)));
                 books.add(b);
             }
         } catch (SQLException | ClassNotFoundException e) {
@@ -132,7 +132,7 @@ public class Books extends Thread {
                             rs.getString("title"),
                             rs.getString("author"),
                             rs.getString("category"),
-                            rs.getString("status")));
+                            BookStatus.fromString(rs.getString("status"))));
                 }
             }
         } catch (SQLException e) {

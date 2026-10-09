@@ -1,9 +1,19 @@
 package com.projet;
 
 public enum BookStatus {
-    DISPONIBLE,
-    EMPRUNTE,
-    RESERVE;
+    DISPONIBLE("Disponible"),
+    EMPRUNTE("Emprunté"),
+    RESERVE("Réservé");
+
+    private final String label;
+
+    BookStatus(String label) {
+        this.label = label;
+    }
+
+    public String getLabel() {
+        return label;
+    }
 
     public static BookStatus fromString(String value) {
         if (value == null || value.isBlank()) {
