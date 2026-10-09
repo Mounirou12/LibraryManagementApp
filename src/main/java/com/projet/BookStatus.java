@@ -1,5 +1,7 @@
 package com.projet;
 
+import java.text.Normalizer;
+
 public enum BookStatus {
     DISPONIBLE("Disponible"),
     EMPRUNTE("Emprunté"),
@@ -21,7 +23,7 @@ public enum BookStatus {
         }
 
         // Normaliser : enlève accents, met en majuscules, trim
-        String normalized = java.text.Normalizer
+        String normalized = Normalizer
                 .normalize(value, java.text.Normalizer.Form.NFD)
                 .replaceAll("\\p{M}", "")
                 .toUpperCase()

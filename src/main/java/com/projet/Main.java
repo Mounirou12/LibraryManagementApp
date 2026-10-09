@@ -5,7 +5,7 @@ public class Main {
     public static void main(String[] args) {
         Books tableBook = new Books();
         Members tablMembers = new Members();
-        Borrowing tableBorrowing = new Borrowing();
+        Borrowings tableBorrowing = new Borrowings();
 
         tableBook.start();
         tablMembers.start();
