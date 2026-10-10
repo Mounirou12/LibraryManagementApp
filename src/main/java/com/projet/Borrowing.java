@@ -1,204 +1,53 @@
 package com.projet;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.time.LocalDate;
 
-public class Borrowing extends Thread {
-    private static final String URL = "jdbc:mysql://127.0.0.1:3306/Librairie";
-    private static final String USERNAME = "mounir";
-    private static final String PASSWORD = "agnila10";
+public class Borrowing {
+    private int id;
+    private int bookId;
+    private int memberId;
+    private LocalDate borrowDate;
+    private LocalDate duDateDtDate;
+    private LocalDate returDate;
+    private BorrowingStatus status;
 
-    public static boolean canBorrow(int memberId) {
-        String sqlRSM = "SELECT status FROM Members WHERE id=?";
-        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-                PreparedStatement pstmt = conn.prepareStatement(sqlRSM)) {
-            pstmt.setInt(1, memberId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return "ACTIF".equals(rs.getString("status"));
-                }
-                return false;
-            }
-        } catch (SQLException e) {
-            System.out.println("Erreur verification membre:" + e.getMessage());
-            return false;
-        }
+    public Borrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate duDateDtDate,
+            LocalDate returDate, BorrowingStatus status) {
+        this.id = id;
+        this.bookId = bookId;
+        this.memberId = memberId;
+        this.borrowDate = borrowDate;
+        this.duDateDtDate = duDateDtDate;
+        this.returDate = returDate;
+        this.status = status;
     }
 
-    public static boolean isBookAvailable(int bookId) {
-        String sqlRSBK = "SELECT status FROM Books WHERE id=?";
-        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-                PreparedStatement pstmt = conn.prepareStatement(sqlRSBK)) {
-            pstmt.setInt(1, bookId);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return "DISPONIBLE".equals(rs.getString("status"));
-                }
-                return false;
-            }
-        } catch (SQLException e) {
-            System.out.println("Erreur vérification livre : " + e.getMessage());
-            return false;
-        }
+    public int getId() {
+        return id;
     }
 
-    public int insertBorrowing(int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            LocalDate returnDate) {
-        if (!canBorrow(memberId)) {
-            System.out.println("Emprunt refusé : le membre " + memberId
-                    + " n'est pas autorisé (suspendu).");
-            return 0;
-        }
-        if (!isBookAvailable(bookId)) {
-            System.out.println("Emprunt refusé : le livre " + bookId
-                    + " n'est pas disponible.");
-            return 0;
-        }
-
-        BorrowingStatus status;
-        if (returnDate != null) {
-            status = BorrowingStatus.RETOURNE;
-        } else if (LocalDate.now().isAfter(dueDate)) {
-            status = BorrowingStatus.EN_RETARD;
-        } else {
-            status = BorrowingStatus.EN_COURS;
-        }
-        String queryCR = "INSERT INTO Borrowing(bookId,memberId,borrowDate,dueDate,returnDate,status)"
-                + " VALUES(?,?,?,?,?,?)";
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(queryCR);
-            pstmt.setInt(1, bookId);
-            pstmt.setInt(2, memberId);
-            pstmt.setObject(3, borrowDate);
-            pstmt.setObject(4, dueDate);
-            pstmt.setObject(5, returnDate);
-            pstmt.setString(6, status.name());
-            return pstmt.executeUpdate();
-        } catch (SQLException | ClassNotFoundException e) {
-            System.out.println("Erreur INSERT Borrowing : " + e.getMessage());
-            return 0;
-        }
+    public int getBookId() {
+        return bookId;
     }
 
-    public int updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            LocalDate returnDate) {
-        if (!canBorrow(memberId)) {
-            System.out.println("Emprunt refusé : le membre " + memberId
-                    + " n'est pas autorisé (suspendu).");
-            return 0;
-        }
-        if (!isBookAvailable(bookId)) {
-            System.out.println("Emprunt refusé : le livre " + bookId
-                    + " n'est pas disponible.");
-            return 0;
-        }
-        BorrowingStatus status;
-        if (returnDate != null) {
-            status = BorrowingStatus.RETOURNE;
-        } else if (LocalDate.now().isAfter(dueDate)) {
-            status = BorrowingStatus.EN_RETARD;
-        } else {
-            status = BorrowingStatus.EN_COURS;
-        }
-        String queryUp = "UPDATE Borrowing SET bookId=?,memberId=?,borrowDate=?,dueDate=?, returnDate= ?, status = ? WHERE id=?";
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(queryUp);
-            pstmt.setInt(1, bookId);
-            pstmt.setInt(2, memberId);
-            pstmt.setObject(3, borrowDate);
-            pstmt.setObject(4, dueDate);
-            pstmt.setObject(5, returnDate);
-            pstmt.setString(6, status.name());
-            pstmt.setInt(7, id);
-            return pstmt.executeUpdate();
-        } catch (SQLException | ClassNotFoundException e) {
-            System.out.println("Erreur UPDATE Borrowing : " + e.getMessage());
-            return 0;
-        }
+    public int getMemberId() {
+        return memberId;
     }
 
-    public int deleteBorrowing(int id) {
-        String queryDl = "DELETE FROM Borrowing WHERE id = ?";
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(queryDl);
-            pstmt.setInt(1, id);
-            return pstmt.executeUpdate();
-
-        } catch (SQLException | ClassNotFoundException e) {
-            System.out.println("Erreur DELETE Borrowing : " + e.getMessage());
-            return 0;
-        }
+    public LocalDate getBorrowDate() {
+        return borrowDate;
     }
 
-    public void getBorrowingById(int id) {
-        String sqlRdId = "SELECT id,bookId,memberId,borrowDate,dueDate,returnDate,status FROM Borrowing WHERE id = ?";
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(sqlRdId);
-            pstmt.setInt(1, id);
-            try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    System.out.println(rs.getInt(1) + " - "
-                            + rs.getInt(2) + " - "
-                            + rs.getInt(3) + " - "
-                            + rs.getDate(4) + " - "
-                            + rs.getDate(5) + " - "
-                            + rs.getDate(6) + " - "
-                            + rs.getString(7));
-                } else {
-                    System.out.println("Aucun enprunt avec l'id " + id);
-                }
-            }
-        } catch (SQLException | ClassNotFoundException e) {
-            System.out.println("Erreur SELECT Borrowing : " + e.getMessage());
-        }
+    public LocalDate getDuDateDtDate() {
+        return duDateDtDate;
     }
 
-    public void getAllMembers() {
-        String queryRD = "SELECT * From Borrowing";
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(queryRD);
-            ResultSet rs = pstmt.executeQuery(queryRD);
-            while (rs.next()) {
-                System.out.print(rs.getInt(1) + " - ");
-                System.out.print(rs.getInt(2) + " - ");
-                System.out.print(rs.getInt(3) + " - ");
-                System.out.print(rs.getDate(4) + " - ");
-                System.out.print(rs.getDate(5) + " - ");
-                System.out.print(rs.getDate(6) + " - ");
-                System.out.println(rs.getString(7));
-            }
-        } catch (SQLException | ClassNotFoundException e) {
-            System.out.println("Erreur SELECT ALL Borrowing : " + e.getMessage());
-        }
-
+    public LocalDate getReturDate() {
+        return returDate;
     }
 
-    @Override
-    public void run() {
-        // insertBorrowing(1, 1, LocalDate.of(2024, 04, 1), LocalDate.of(2024, 04,
-        // 1).plusDays(14), null);
-        // insertBorrowing(1, 2, LocalDate.of(2024, 03, 10), LocalDate.of(2024, 03,
-        // 10).plusDays(14),LocalDate.of(2024, 03, 22));
-        // updateBorrowing(2, 4, 3, LocalDate.of(2024, 02, 1), LocalDate.of(2024, 02,
-        // 1).plusDays(14), LocalDate.of(2024, 02, 22));
-        // deleteBorrowing(1);
-        // getBorrowingById(2);
-        // getAllMembers();
-
+    public BorrowingStatus getStatus() {
+        return status;
     }
 
 }

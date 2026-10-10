@@ -6,6 +6,8 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Borrowings extends Thread {
     private static final String URL = "jdbc:mysql://127.0.0.1:3306/Librairie";
@@ -86,7 +88,7 @@ public class Borrowings extends Thread {
         }
     }
 
-    public static  boolean updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
+    public static boolean updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
             LocalDate returnDate) {
         if (!canBorrow(memberId)) {
             System.out.println("Emprunt refusé : le membre " + memberId
@@ -118,22 +120,21 @@ public class Borrowings extends Thread {
             pstmt.setObject(5, returnDate);
             pstmt.setString(6, status.name());
             pstmt.setInt(7, id);
-            return pstmt.executeUpdate()>0;
+            return pstmt.executeUpdate() > 0;
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur UPDATE Borrowing : " + e.getMessage());
             return false;
         }
     }
 
-
-    public static  boolean deleteBorrowing(int id) {
+    public static boolean deleteBorrowing(int id) {
         String queryDl = "DELETE FROM Borrowing WHERE id = ?";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
             Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
             PreparedStatement pstmt = conn.prepareStatement(queryDl);
             pstmt.setInt(1, id);
-            return pstmt.executeUpdate() >0;
+            return pstmt.executeUpdate() > 0;
 
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur DELETE Borrowing : " + e.getMessage());
@@ -166,7 +167,8 @@ public class Borrowings extends Thread {
         }
     }
 
-    public void getAllMembers() {
+    public List<Borrowing> getAllBorrowings() {
+        List<Borrowing> borrowings = new ArrayList<>();
         String queryRD = "SELECT * From Borrowing";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -174,18 +176,44 @@ public class Borrowings extends Thread {
             PreparedStatement pstmt = conn.prepareStatement(queryRD);
             ResultSet rs = pstmt.executeQuery(queryRD);
             while (rs.next()) {
-                System.out.print(rs.getInt(1) + " - ");
-                System.out.print(rs.getInt(2) + " - ");
-                System.out.print(rs.getInt(3) + " - ");
-                System.out.print(rs.getDate(4) + " - ");
-                System.out.print(rs.getDate(5) + " - ");
-                System.out.print(rs.getDate(6) + " - ");
-                System.out.println(rs.getString(7));
+                Borrowing b = new Borrowing(rs.getInt(1),
+                        rs.getInt(2),
+                        rs.getInt(3),
+                        rs.getDate(4).toLocalDate(),
+                        rs.getDate(5).toLocalDate(),
+                        rs.getDate(6).toLocalDate(),
+                        BorrowingStatus.fromString(rs.getString(7)));
             }
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur SELECT ALL Borrowing : " + e.getMessage());
         }
+        return borrowings;
 
+    }
+
+    public static List<Borrowing> searchBorrowings(String search) {
+        List<Borrowing> borrowings = new ArrayList<>();
+        String querySB = "SELECT * from Borrowing WHERE status = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(querySB)) {
+            pstmt.setString(1, search);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    borrowings.add(new Borrowing(
+                            rs.getInt("id"),
+                            rs.getInt("bookId"),
+                            rs.getInt("memberId"),
+                            rs.getDate("borrowDate").toLocalDate(),
+                            rs.getDate("dueDate").toLocalDate(),
+                            rs.getDate("returnDate").toLocalDate(),
+                            BorrowingStatus.fromString(rs.getString("status"))));
+                }
+            }
+        } catch (SQLException e) {
+            System.out.println("Erreur recherche : " + e.getMessage());
+        }
+        return borrowings;
     }
 
     @Override
