@@ -20,15 +20,50 @@ public class Borrowings extends Thread {
                 PreparedStatement pstmt = conn.prepareStatement(sqlRSM)) {
             pstmt.setInt(1, memberId);
             try (ResultSet rs = pstmt.executeQuery()) {
-                if (rs.next()) {
-                    return "ACTIF".equals(rs.getString("status"));
+                if (!rs.next()) {
+                    System.out.println("Membre " + memberId + " introuvable.");
+                    return false;
                 }
-                return false;
+
+                String status = rs.getString("status");
+                if (!"ACTIF".equals(status)) {
+                    System.out.println("Membre " + memberId
+                            + " non actif (statut : " + status + ").");
+                    return false;
+                }
             }
+
         } catch (SQLException e) {
-            System.out.println("Erreur verification membre:" + e.getMessage());
+            System.out.println("Erreur vérification membre : " + e.getMessage());
             return false;
         }
+
+        // 2. Vérifier que le membre n'a pas déjà 2 emprunts en cours
+        String sqlCount = "SELECT COUNT(*) FROM Borrowing "
+                + "WHERE memberId = ? AND status = 'EN_COURS'";
+
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(sqlCount)) {
+
+            pstmt.setInt(1, memberId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    if (count >= 2) {
+                        System.out.println("Membre " + memberId
+                                + " a déjà " + count + " emprunts en cours (max 2).");
+                        return false;
+                    }
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Erreur comptage emprunts : " + e.getMessage());
+            return false;
+        }
+        // 3. Tout est OK
+        return true;
     }
 
     public static boolean isBookAvailable(int bookId) {
@@ -48,6 +83,19 @@ public class Borrowings extends Thread {
         }
     }
 
+    public static boolean updateBookStatut(int bookId, BookStatus status) {
+        String queryUBS = "UPDATE Books SET status = ? WHERE id = ?";
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(queryUBS)) {
+            pstmt.setString(1, status.name());
+            pstmt.setInt(2, bookId);
+            return pstmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Erreur updateBookStatus : " + e.getMessage());
+            return false;
+        }
+    }
+
     public static boolean insertBorrowing(int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
             LocalDate returnDate) {
         if (!canBorrow(memberId)) {
@@ -62,9 +110,9 @@ public class Borrowings extends Thread {
         }
 
         BorrowingStatus status;
-        if (returnDate != null) {
+        if (returnDate != null && !LocalDate.now().isAfter(dueDate)) {
             status = BorrowingStatus.RETOURNE;
-        } else if (LocalDate.now().isAfter(dueDate)) {
+        } else if (returnDate != null && LocalDate.now().isAfter(dueDate)) {
             status = BorrowingStatus.EN_RETARD;
         } else {
             status = BorrowingStatus.EN_COURS;
@@ -81,47 +129,63 @@ public class Borrowings extends Thread {
             pstmt.setObject(4, dueDate);
             pstmt.setObject(5, returnDate);
             pstmt.setString(6, status.name());
-            return pstmt.executeUpdate() > 0;
+
+            int rows = pstmt.executeUpdate();
+            if (rows > 0) {
+                updateBookStatut(bookId, BookStatus.EMPRUNTE);
+                return true;
+            }
+            return false;
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur INSERT Borrowing : " + e.getMessage());
             return false;
         }
     }
 
-    public static boolean updateBorrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
-            LocalDate returnDate) {
-        if (!canBorrow(memberId)) {
-            System.out.println("Emprunt refusé : le membre " + memberId
-                    + " n'est pas autorisé (suspendu).");
-            return false;
-        }
-        if (!isBookAvailable(bookId)) {
-            System.out.println("Emprunt refusé : le livre " + bookId
-                    + " n'est pas disponible.");
-            return false;
-        }
+    public static boolean updateBorrowing(int id, int bookId, int memberId,
+            LocalDate borrowDate, LocalDate dueDate, LocalDate returnDate) {
+
+        // ⚠️ Pas de canBorrow() ici : on modifie un emprunt existant
+
+        // Calculer le statut
         BorrowingStatus status;
         if (returnDate != null) {
-            status = BorrowingStatus.RETOURNE;
-        } else if (LocalDate.now().isAfter(dueDate)) {
-            status = BorrowingStatus.EN_RETARD;
+            // Le livre a été retourné → comparer returnDate avec dueDate
+            if (returnDate.isAfter(dueDate)) {
+                status = BorrowingStatus.EN_RETARD; // retourné en retard
+            } else {
+                status = BorrowingStatus.RETOURNE; // retourné à temps
+            }
         } else {
-            status = BorrowingStatus.EN_COURS;
+            // Pas encore retourné → comparer aujourd'hui avec dueDate
+            if (LocalDate.now().isAfter(dueDate)) {
+                status = BorrowingStatus.EN_RETARD; // pas rendu et en retard
+            } else {
+                status = BorrowingStatus.EN_COURS; // pas rendu, dans les temps
+            }
         }
-        String queryUp = "UPDATE Borrowing SET bookId=?,memberId=?,borrowDate=?,dueDate=?, returnDate= ?, status = ? WHERE id=?";
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(queryUp);
+
+        String queryUp = "UPDATE Borrowing SET bookId = ?, memberId = ?, "
+                + "borrowDate = ?, dueDate = ?, returnDate = ?, status = ? "
+                + "WHERE id = ?";
+
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(queryUp)) {
+
             pstmt.setInt(1, bookId);
             pstmt.setInt(2, memberId);
             pstmt.setObject(3, borrowDate);
             pstmt.setObject(4, dueDate);
-            pstmt.setObject(5, returnDate);
+            pstmt.setObject(5, returnDate); // peut être null
             pstmt.setString(6, status.name());
             pstmt.setInt(7, id);
-            return pstmt.executeUpdate() > 0;
-        } catch (SQLException | ClassNotFoundException e) {
+            int rows = pstmt.executeUpdate();
+            if (rows > 0) {
+                updateBookStatut(bookId, BookStatus.DISPONIBLE);
+                return true;
+            }
+            return false;
+        } catch (SQLException e) {
             System.out.println("Erreur UPDATE Borrowing : " + e.getMessage());
             return false;
         }
@@ -176,13 +240,13 @@ public class Borrowings extends Thread {
             PreparedStatement pstmt = conn.prepareStatement(queryRD);
             ResultSet rs = pstmt.executeQuery(queryRD);
             while (rs.next()) {
-                Borrowing b = new Borrowing(rs.getInt(1),
+                borrowings.add(new Borrowing(rs.getInt(1),
                         rs.getInt(2),
                         rs.getInt(3),
                         rs.getDate(4).toLocalDate(),
                         rs.getDate(5).toLocalDate(),
                         rs.getDate(6).toLocalDate(),
-                        BorrowingStatus.fromString(rs.getString(7)));
+                        BorrowingStatus.fromString(rs.getString(7))));
             }
         } catch (SQLException | ClassNotFoundException e) {
             System.out.println("Erreur SELECT ALL Borrowing : " + e.getMessage());
@@ -218,11 +282,13 @@ public class Borrowings extends Thread {
 
     @Override
     public void run() {
-         insertBorrowing(2, 2, LocalDate.of(2024, 03, 10), LocalDate.of(2024, 03, 10).plusDays(14),LocalDate.of(2024, 03, 22));
+        // insertBorrowing(2, 5, LocalDate.of(2024, 02, 10), LocalDate.of(2024, 02,
+        // 10).plusDays(14),
+        // null);
         // insertBorrowing(1, 2, LocalDate.of(2024, 03, 10), LocalDate.of(2024, 03,
         // 10).plusDays(14),LocalDate.of(2024, 03, 22));
-        // updateBorrowing(2, 4, 3, LocalDate.of(2024, 02, 1), LocalDate.of(2024, 02,
-        // 1).plusDays(14), LocalDate.of(2024, 02, 22));
+        updateBorrowing(8, 2, 5, LocalDate.of(2024, 02, 10), LocalDate.of(2024, 02,
+                10).plusDays(14), LocalDate.of(2024, 02, 22));
         // deleteBorrowing(1);
         // getBorrowingById(2);
         // getAllMembers();
