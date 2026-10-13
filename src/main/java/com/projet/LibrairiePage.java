@@ -42,7 +42,7 @@ public class LibrairiePage extends JFrame {
 
         contentArea.add(createDashboardPage(), "dashboard");
         contentArea.add(createBooksPage(), "books");
-        contentArea.add(createTable(), "members");
+        contentArea.add(new CreateMembersPage(), "members");
         contentArea.add(createTable(), "borrowing");
         add(createSidebar(), BorderLayout.WEST);
         add(contentArea, BorderLayout.CENTER);
@@ -176,8 +176,8 @@ public class LibrairiePage extends JFrame {
         dialog.setVisible(true);
 
         if (dialog.isSaved()) {
-            loadBooksIntoModel(Books.getAllMembers());
-            loadDashboardData(Books.getAllMembers());
+            loadBooksIntoModel(Books.getAllBooks());
+            loadDashboardData(Books.getAllBooks());
         }
 
     }
@@ -191,8 +191,8 @@ public class LibrairiePage extends JFrame {
                 "Confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
         if (confirm == JOptionPane.YES_OPTION && Books.deleteBook(bookId)) {
-            loadBooksIntoModel(Books.getAllMembers());
-            loadDashboardData(Books.getAllMembers());
+            loadBooksIntoModel(Books.getAllBooks());
+            loadDashboardData(Books.getAllBooks());
         }
     }
 
@@ -244,7 +244,7 @@ public class LibrairiePage extends JFrame {
         dashboardDebounceTimer = new Timer(300, e -> {
             String texte = dashboardSearch.getText().trim();
             List<Book> resultats = texte.isEmpty()
-                    ? Books.getAllMembers()
+                    ? Books.getAllBooks()
                     : Books.searchBooks(texte);
             loadDashboardData(resultats); // ⚠️ met à jour le tableau
         });
@@ -301,7 +301,7 @@ public class LibrairiePage extends JFrame {
         booksDebounceTimer = new Timer(300, e -> {
             String texte = booksSearch.getText().trim();
             List<Book> resultats = texte.isEmpty()
-                    ? Books.getAllMembers()
+                    ? Books.getAllBooks()
                     : Books.searchBooks(texte);
             loadBooksIntoModel(resultats);
         });
@@ -348,7 +348,7 @@ public class LibrairiePage extends JFrame {
                     SwingUtilities.getWindowAncestor(this));
             dialog.setVisible(true);
             if (dialog.isSaved()) {
-                loadBooksIntoModel(Books.getAllMembers());
+                loadBooksIntoModel(Books.getAllBooks());
             }
         });
 
@@ -546,7 +546,7 @@ public class LibrairiePage extends JFrame {
         };
 
         // Chargement des données depuis la base
-        loadDashboardData(Books.getAllMembers());
+        loadDashboardData(Books.getAllBooks());
 
         JTable table = new JTable(dashboardModel);
         table.setRowHeight(40);
@@ -597,7 +597,7 @@ public class LibrairiePage extends JFrame {
         };
 
         // Chargement des données depuis la base
-        loadBooksIntoModel(Books.getAllMembers());
+        loadBooksIntoModel(Books.getAllBooks());
 
         JTable table = new JTable(booksModel);
         table.setRowHeight(40);

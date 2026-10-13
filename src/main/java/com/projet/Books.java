@@ -90,7 +90,7 @@ public class Books extends Thread {
         }
     }
 
-    public static List<Book> getAllMembers() {
+    public static List<Book> getAllBooks() {
         List<Book> books = new ArrayList<>();
         String queryRD = "SELECT * From Books";
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);

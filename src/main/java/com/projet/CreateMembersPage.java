@@ -1,21 +1,18 @@
 package com.projet;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-
-import com.projet.LibrairiePage.DeleteEditor;
-import com.projet.LibrairiePage.DeleteRenderer;
-import com.projet.LibrairiePage.EditEditor;
-import com.projet.LibrairiePage.EditRenderer;
-import com.projet.LibrairiePage.StatusRenderer;
-
+import javax.swing.table.TableCellEditor;
+import javax.swing.table.TableCellRenderer;
 
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.function.IntConsumer;
 
@@ -27,17 +24,28 @@ public class CreateMembersPage extends JPanel {
     private static final Color TEXT_DARK = new Color(0x1F, 0x29, 0x37);
     private static final Color TEXT_GRAY = new Color(0x6B, 0x72, 0x80);
     private static final Color BORDER_GRAY = new Color(0xE5, 0xE7, 0xEB);
-    
 
-    /* public class CreateMembersPage(){
+    public CreateMembersPage() {
+        setLayout(new BorderLayout());
+        setBackground(Color.white);
+        setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        } */
+        JScrollPane tableScroll = createTable();
+        JPanel top = new JPanel();
+        top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
+        top.setBackground(Color.white);
+        top.add(createHeader());
+        top.add(createToolbar());
 
-         private void loadMembersIntoModel(List<Member> members) {
+        add(top, BorderLayout.NORTH);
+        add(tableScroll, BorderLayout.CENTER);
+    }
+
+    private void loadMembersIntoModel(List<Member> members) {
         membersModel.setRowCount(0); // ⚠️ booksModel (camelCase)
         for (Member m : members) {
             membersModel.addRow(new Object[] {
-                     m.getId(),
+                    m.getId(),
                     m.getFirstName(),
                     m.getLastName(),
                     m.getEmail(),
@@ -50,19 +58,117 @@ public class CreateMembersPage extends JPanel {
         }
     }
 
-        private JScrollPane createTableable(){
-        String[] columns = { "ID", "First Name", "Last Name", "Email", "Phone",
-                             "Membership Date", "Status", "Edit", "Delete" };
+    private JPanel createHeader() {
+        JPanel header = new JPanel(new BorderLayout());
+        header.setBackground(Color.WHITE);
+        header.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
 
-        membersModel = new DefaultTableModel(columns,0){
-        @Override
-        public boolean isCellEditable(int row,int column){
-            return column == 7 || column ==8;
-        }};
+        // --- Ligne du haut : le titre ---
+        JLabel title = new JLabel("Library Members");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        title.setForeground(TEXT_DARK);
+
+        // --- Ligne du bas : recherche (gauche) + bouton (droite) ---
+
+        header.add(title, BorderLayout.WEST);
+
+        return header;
+    }
+
+    private JPanel createToolbar() {
+        JPanel toolbar = new JPanel(new BorderLayout(10, 0));
+        toolbar.setBackground(Color.WHITE);
+        toolbar.setBorder(BorderFactory.createEmptyBorder(0, 0, 15, 0));
+        JPanel searchRow = new JPanel(new BorderLayout(10, 0));
+        searchRow.setBackground(Color.WHITE);
+        searchRow.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+
+        // --- Champ de recherche (gauche) ---
+        memberSearch = new PlaceholderTextField("Search by firstName or LastName");
+        memberSearch.setPreferredSize(new Dimension(250, 35));
+        memberSearch.setForeground(TEXT_DARK);
+        memberSearch.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(BORDER_GRAY, 1, true),
+                BorderFactory.createEmptyBorder(5, 10, 5, 10)));
+
+        membersDebounceTimer = new Timer(300, e -> {
+            String texte = memberSearch.getText().trim();
+            List<Member> resultats = texte.isEmpty()
+                    ? Members.getAllMembers()
+                    : Members.searchMembers(texte);
+            loadMembersIntoModel(resultats);
+        });
+        membersDebounceTimer.setRepeats(false);
+
+        memberSearch.getDocument().addDocumentListener(new DocumentListener() {
+            private void relancer() {
+                if (membersDebounceTimer.isRunning())
+                    membersDebounceTimer.stop();
+                membersDebounceTimer.start();
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                relancer();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                relancer();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                relancer();
+            }
+        });
+
+        // --- Bouton Add (droite) ---
+        JButton addBtn = new JButton("+  Add Member");
+        addBtn.setBackground(new Color(0x3B, 0x82, 0xF6));
+        addBtn.setForeground(Color.WHITE);
+        addBtn.setFont(new Font("Segoe UI", Font.BOLD, 13));
+        addBtn.setRolloverEnabled(false);
+        addBtn.setOpaque(true);
+        addBtn.setContentAreaFilled(true);
+        addBtn.setFocusPainted(false);
+        addBtn.setBorderPainted(false);
+        addBtn.setPreferredSize(new Dimension(150, 35));
+        addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        addBtn.addActionListener(e -> {
+            BookDialog dialog = new BookDialog(
+                    SwingUtilities.getWindowAncestor(this));
+            dialog.setVisible(true);
+            if (dialog.isSaved()) {
+                loadMembersIntoModel(Members.getAllMembers());
+            }
+        });
+
+        // --- Assemblage ---
+        JPanel searchWrapper = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        searchWrapper.setBackground(Color.WHITE);
+        searchWrapper.add(memberSearch);
+
+        toolbar.add(searchWrapper, BorderLayout.WEST);
+        toolbar.add(addBtn, BorderLayout.EAST);
+        return toolbar;
+    }
+
+    private JScrollPane createTable() {
+        String[] columns = { "ID", "First Name", "Last Name", "Email", "Phone",
+                "Membership Date", "Status", "Edit", "Delete" };
+
+        membersModel = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 7 || column == 8;
+            }
+        };
 
         loadMembersIntoModel(Members.getAllMembers());
 
-         JTable table = new JTable(membersModel);
+        JTable table = new JTable(membersModel);
         table.setRowHeight(40);
         table.setFont(new Font("Segoe UI", Font.PLAIN, 13));
         table.setForeground(TEXT_DARK);
@@ -85,29 +191,198 @@ public class CreateMembersPage extends JPanel {
         table.getColumnModel().getColumn(0).setWidth(0);
 
         // Renderers
-        table.getColumnModel().getColumn(4).setCellRenderer(new StatusRenderer());
-        table.getColumnModel().getColumn(5).setCellRenderer(new EditRenderer());
-       // table.getColumnModel().getColumn(5).setCellEditor(new EditEditor(row -> onEditBook(table, row)));
-        table.getColumnModel().getColumn(6).setCellRenderer(new DeleteRenderer());
-       // table.getColumnModel().getColumn(6).setCellEditor(new DeleteEditor(row -> onDeleteBook(table, row)));
+        table.getColumnModel().getColumn(6).setCellRenderer(new StatusRenderer());
+        table.getColumnModel().getColumn(7).setCellRenderer(new EditRenderer());
+        table.getColumnModel().getColumn(7).setCellEditor(new EditEditor(row -> onEditMember(table, row)));
+        table.getColumnModel().getColumn(8).setCellRenderer(new DeleteRenderer());
+        table.getColumnModel().getColumn(8).setCellEditor(new DeleteEditor(row -> onDeleteMember(table, row)));
 
         // Largeurs
-        table.getColumnModel().getColumn(1).setPreferredWidth(180);
-        table.getColumnModel().getColumn(2).setPreferredWidth(160);
-        table.getColumnModel().getColumn(3).setPreferredWidth(100);
+        table.getColumnModel().getColumn(1).setPreferredWidth(120);
+        table.getColumnModel().getColumn(2).setPreferredWidth(120);
+        table.getColumnModel().getColumn(3).setPreferredWidth(180);
         table.getColumnModel().getColumn(4).setPreferredWidth(120);
-        table.getColumnModel().getColumn(5).setPreferredWidth(80);
-        table.getColumnModel().getColumn(6).setPreferredWidth(80);
+        table.getColumnModel().getColumn(5).setPreferredWidth(120);
+        table.getColumnModel().getColumn(6).setPreferredWidth(100);
+        table.getColumnModel().getColumn(7).setPreferredWidth(80);
+        table.getColumnModel().getColumn(8).setPreferredWidth(80);
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createLineBorder(BORDER_GRAY));
         scroll.getViewport().setBackground(Color.WHITE);
         return scroll;
-    
+    }
 
+    static class EditRenderer extends JButton implements TableCellRenderer {
 
+        public EditRenderer() {
+            setText("Edit");
+            setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+            setForeground(new Color(0x3B, 0x82, 0xF6));
+            setBackground(Color.WHITE);
+            setFocusPainted(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setRolloverEnabled(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setOpaque(true);
         }
-         static class StatusRenderer extends DefaultTableCellRenderer {
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus,
+                int row, int column) {
+            setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            return this;
+        }
+
+    }
+
+    static class EditEditor extends AbstractCellEditor implements TableCellEditor {
+        private final JButton button;
+        private int currentRow;
+        private final IntConsumer onEdit;
+
+        public EditEditor(IntConsumer onEdit) {
+            this.onEdit = onEdit;
+            button = new JButton("Edit");
+            button.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+            button.setForeground(new Color(0x3B, 0x82, 0xF6));
+            button.setBackground(Color.WHITE);
+            button.setFocusPainted(false);
+            button.setContentAreaFilled(false);
+            button.setBorderPainted(false);
+            button.setRolloverEnabled(false);
+            button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            button.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    e.consume();
+                    int rowToEdit = currentRow;
+                    fireEditingStopped();
+                    if (onEdit != null)
+                        onEdit.accept(rowToEdit);
+                }
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            this.currentRow = row;
+            button.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return "";
+        }
+    }
+
+    static class DeleteRenderer extends JButton implements TableCellRenderer {
+        public DeleteRenderer() {
+            setText("Delete");
+            setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+            setForeground(new Color(0xEF, 0x44, 0x44));
+            setBackground(Color.WHITE);
+            setFocusPainted(false);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setRolloverEnabled(false);
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setOpaque(true);
+        }
+
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value,
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            return this;
+        }
+    }
+
+    static class DeleteEditor extends AbstractCellEditor implements TableCellEditor {
+        private final JButton button;
+        private int currentRow;
+        private final IntConsumer onDelete;
+
+        public DeleteEditor(IntConsumer onDelete) {
+            this.onDelete = onDelete;
+            button = new JButton("Delete");
+            button.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 14));
+            button.setForeground(Color.BLACK);
+            button.setBackground(Color.white);
+            button.setFocusPainted(false);
+            button.setContentAreaFilled(false);
+            button.setBorderPainted(false);
+            button.setRolloverEnabled(false);
+            button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+            button.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mousePressed(MouseEvent e) {
+                    e.consume();
+                    int rowToDelete = currentRow;
+                    fireEditingStopped();
+                    if (onDelete != null)
+                        onDelete.accept(rowToDelete);
+                }
+            });
+        }
+
+        @Override
+        public Component getTableCellEditorComponent(JTable table, Object value,
+                boolean isSelected, int row, int column) {
+            this.currentRow = row;
+            button.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
+            return button;
+        }
+
+        @Override
+        public Object getCellEditorValue() {
+            return "";
+        }
+    }
+
+    private static int asInt(Object value) {
+        if (value == null)
+            return -1;
+        if (value instanceof Integer integer)
+            return integer;
+        try {
+            return Integer.parseInt(value.toString().trim());
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private void onEditMember(JTable table, int row) {
+        int memberId = asInt(table.getModel().getValueAt(row, 0));
+        String firstName = table.getModel().getValueAt(row, 1).toString();
+        String lastName = table.getModel().getValueAt(row, 2).toString();
+        String email = table.getModel().getValueAt(row, 3).toString();
+        String phone = table.getModel().getValueAt(row, 4).toString();
+        LocalDate membershipDate = (LocalDate) table.getModel().getValueAt(row, 5);
+        MemberStatus status = MemberStatus.valueOf(table.getModel().getValueAt(row, 6).toString());
+
+        Member member = new Member(memberId, firstName, lastName, email, phone, membershipDate, status);
+
+    }
+
+    private void onDeleteMember(JTable table, int row) {
+        int memberId = asInt(table.getModel().getValueAt(row, 0));
+        String firstName = table.getModel().getValueAt(row, 1).toString();
+        int confirm = JOptionPane.showConfirmDialog(this,
+                "Supprimer le mebre \"" + firstName + "\" ?",
+                "Confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION && Members.deleteMember(memberId)) {
+            loadMembersIntoModel(Members.getAllMembers());
+        }
+    }
+
+    static class StatusRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
                 boolean isSelected, boolean hasFocus, int row, int column) {
@@ -160,8 +435,7 @@ public class CreateMembersPage extends JPanel {
         }
     }
 
-
-        public class PlaceholderTextField extends JTextField {
+    public class PlaceholderTextField extends JTextField {
 
         private String placeholder;
 
@@ -207,5 +481,4 @@ public class CreateMembersPage extends JPanel {
         }
     }
 
-        
-    }
+}
