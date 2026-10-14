@@ -137,7 +137,7 @@ public class CreateMembersPage extends JPanel {
         addBtn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
         addBtn.addActionListener(e -> {
-            BookDialog dialog = new BookDialog(
+            MemberDialog dialog = new MemberDialog(
                     SwingUtilities.getWindowAncestor(this));
             dialog.setVisible(true);
             if (dialog.isSaved()) {
