@@ -367,7 +367,13 @@ public class CreateMembersPage extends JPanel {
         MemberStatus status = MemberStatus.valueOf(table.getModel().getValueAt(row, 6).toString());
 
         Member member = new Member(memberId, firstName, lastName, email, phone, membershipDate, status);
+        MemberUpdateDialog dialog = new MemberUpdateDialog(
+            SwingUtilities.getWindowAncestor(this), member);
+            dialog.setVisible(true);
 
+            if (dialog.isSaved()) {
+                loadMembersIntoModel(Members.getAllMembers());
+        }
     }
 
     private void onDeleteMember(JTable table, int row) {
