@@ -50,7 +50,7 @@ public class CreateBorrowingsPage  extends JPanel{
     private static final Color BORDER_GRAY = new Color(0xE5, 0xE7, 0xEB);
 
     public CreateBorrowingsPage(){
-     setLayout(new BorderLayout());
+        setLayout(new BorderLayout());
         setBackground(Color.white);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
