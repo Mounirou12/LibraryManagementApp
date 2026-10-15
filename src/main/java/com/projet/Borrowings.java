@@ -1,6 +1,6 @@
 package com.projet;
 
-import java.sql.Connection;
+import java.sql.*;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -206,7 +206,7 @@ public class Borrowings extends Thread {
         }
     }
 
-    public void getBorrowingById(int id) {
+    public static void getBorrowingById(int id) {
         String sqlRdId = "SELECT id,bookId,memberId,borrowDate,dueDate,returnDate,status FROM Borrowing WHERE id = ?";
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -255,6 +255,45 @@ public class Borrowings extends Thread {
 
     }
 
+    public static List<BorrowingView> getAllBorrowingsView() {
+        List<BorrowingView> borrowings = new ArrayList<>();
+
+        String query = "SELECT b.id, b.bookId, bk.title AS bookTitle, "
+                + "       b.memberId, "
+                + "       CONCAT(m.firstName, ' ', m.lastName) AS memberFullName, "
+                + "       b.borrowDate, b.dueDate, b.returnDate, b.status "
+                + "FROM Borrowing b "
+                + "JOIN Books bk ON b.bookId = bk.id "
+                + "JOIN Members m ON b.memberId = m.id "
+                + "ORDER BY b.borrowDate DESC";
+
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+                PreparedStatement pstmt = conn.prepareStatement(query);
+                ResultSet rs = pstmt.executeQuery()) {
+            while (rs.next()) {
+
+                java.sql.Date sqlBorrow = rs.getDate("borrowDate");
+                java.sql.Date sqlDue = rs.getDate("dueDate");
+                java.sql.Date sqlReturn = rs.getDate("returnDate");
+
+                borrowings.add(new BorrowingView(
+                        rs.getInt("id"),
+                        rs.getInt("bookId"),
+                        rs.getString("bookTitle"),
+                        rs.getInt("memberId"),
+                        rs.getString("memberFullName"),
+                        sqlBorrow != null ? sqlBorrow.toLocalDate() : null,
+                        sqlDue != null ? sqlDue.toLocalDate() : null,
+                        sqlReturn != null ? sqlReturn.toLocalDate() : null,
+                        BorrowingStatus.fromString(rs.getString("status"))));
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Erreur getAllBorrowingsView : " + e.getMessage());
+        }
+        return borrowings;
+    }
+
     public static List<Borrowing> searchBorrowings(String search) {
         List<Borrowing> borrowings = new ArrayList<>();
         String querySB = "SELECT * from Borrowing WHERE status = ?";
@@ -276,6 +315,49 @@ public class Borrowings extends Thread {
             }
         } catch (SQLException e) {
             System.out.println("Erreur recherche : " + e.getMessage());
+        }
+        return borrowings;
+    }
+
+    public static List<BorrowingView> searchBorrowingsByStatus(BorrowingStatus status) {
+        List<BorrowingView> borrowings = new ArrayList<>();
+
+        String query = "SELECT b.id, b.bookId, bk.title AS bookTitle, "
+                + "       b.memberId, "
+                + "       CONCAT(m.firstName, ' ', m.lastName) AS memberFullName, "
+                + "       b.borrowDate, b.dueDate, b.returnDate, b.status "
+                + "FROM Borrowing b "
+                + "JOIN Books bk ON b.bookId = bk.id "
+                + "JOIN Members m ON b.memberId = m.id "
+                + "WHERE b.status = ? "
+                + "ORDER BY b.borrowDate DESC";
+
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+
+            pstmt.setString(1, status.name());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    java.sql.Date sqlBorrow = rs.getDate("borrowDate");
+                    java.sql.Date sqlDue = rs.getDate("dueDate");
+                    java.sql.Date sqlReturn = rs.getDate("returnDate");
+
+                    borrowings.add(new BorrowingView(
+                            rs.getInt("id"),
+                            rs.getInt("bookId"),
+                            rs.getString("bookTitle"),
+                            rs.getInt("memberId"),
+                            rs.getString("memberFullName"),
+                            sqlBorrow != null ? sqlBorrow.toLocalDate() : null,
+                            sqlDue != null ? sqlDue.toLocalDate() : null,
+                            sqlReturn != null ? sqlReturn.toLocalDate() : null,
+                            BorrowingStatus.fromString(rs.getString("status"))));
+                }
+            }
+
+        } catch (SQLException e) {
+            System.out.println("Erreur searchBorrowingsByStatus : " + e.getMessage());
         }
         return borrowings;
     }

@@ -43,7 +43,7 @@ public class LibrairiePage extends JFrame {
         contentArea.add(createDashboardPage(), "dashboard");
         contentArea.add(createBooksPage(), "books");
         contentArea.add(new CreateMembersPage(), "members");
-        contentArea.add(createTable(), "borrowing");
+        contentArea.add(new CreateBorrowingsPage(), "borrowing");
         add(createSidebar(), BorderLayout.WEST);
         add(contentArea, BorderLayout.CENTER);
 

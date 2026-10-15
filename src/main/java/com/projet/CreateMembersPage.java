@@ -395,8 +395,8 @@ public class CreateMembersPage extends JPanel {
 
             // ⚠️ Normaliser en BookStatus
             MemberStatus status;
-            if (value instanceof BookStatus) {
-                status = (MemberStatus) value;
+            if (value instanceof MemberStatus memberStatus) {
+                status = memberStatus;
             } else if (value != null) {
                 status = MemberStatus.fromString(value.toString());
             } else {

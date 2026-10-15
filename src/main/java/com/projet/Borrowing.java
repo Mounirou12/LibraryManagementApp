@@ -8,17 +8,17 @@ public class Borrowing {
     private int memberId;
     private LocalDate borrowDate;
     private LocalDate duDateDtDate;
-    private LocalDate returDate;
+    private LocalDate returnDate;
     private BorrowingStatus status;
 
     public Borrowing(int id, int bookId, int memberId, LocalDate borrowDate, LocalDate duDateDtDate,
-            LocalDate returDate, BorrowingStatus status) {
+            LocalDate returnDate, BorrowingStatus status) {
         this.id = id;
         this.bookId = bookId;
         this.memberId = memberId;
         this.borrowDate = borrowDate;
         this.duDateDtDate = duDateDtDate;
-        this.returDate = returDate;
+        this.returnDate = returnDate;
         this.status = status;
     }
 
@@ -42,8 +42,8 @@ public class Borrowing {
         return duDateDtDate;
     }
 
-    public LocalDate getReturDate() {
-        return returDate;
+    public LocalDate getReturnDate() {
+        return returnDate;
     }
 
     public BorrowingStatus getStatus() {
