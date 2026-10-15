@@ -110,9 +110,9 @@ public class Borrowings extends Thread {
         }
 
         BorrowingStatus status;
-        if (returnDate != null && !LocalDate.now().isAfter(dueDate)) {
+        if (returnDate != null && !LocalDate.now().isAfter(returnDate)) {
             status = BorrowingStatus.RETOURNE;
-        } else if (returnDate != null && LocalDate.now().isAfter(dueDate)) {
+        } else if (returnDate != null && LocalDate.now().isAfter(returnDate)) {
             status = BorrowingStatus.EN_RETARD;
         } else {
             status = BorrowingStatus.EN_COURS;
@@ -192,45 +192,67 @@ public class Borrowings extends Thread {
     }
 
     public static boolean deleteBorrowing(int id) {
-        String queryDl = "DELETE FROM Borrowing WHERE id = ?";
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(queryDl);
-            pstmt.setInt(1, id);
-            return pstmt.executeUpdate() > 0;
+        // 1. Récupérer l'emprunt avant suppression
+        Borrowing borrowing = getBorrowingById(id);
+        if (borrowing == null) return false;
 
-        } catch (SQLException | ClassNotFoundException e) {
+        // 2. Supprimer
+        String queryDl = "DELETE FROM Borrowing WHERE id = ?";
+
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(queryDl)) {
+
+            pstmt.setInt(1, id);
+            int rows = pstmt.executeUpdate();
+
+            if (rows > 0) {
+                // 3. Si l'emprunt était en cours, libérer le livre
+                if (borrowing.getReturnDate() == null) {
+                    Borrowings.updateBookStatut(borrowing.getBookId(), BookStatus.DISPONIBLE);
+                }
+                return true;
+            }
+            return false;
+
+        } catch (SQLException e) {
             System.out.println("Erreur DELETE Borrowing : " + e.getMessage());
             return false;
         }
     }
 
-    public static void getBorrowingById(int id) {
-        String sqlRdId = "SELECT id,bookId,memberId,borrowDate,dueDate,returnDate,status FROM Borrowing WHERE id = ?";
-        try {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-            PreparedStatement pstmt = conn.prepareStatement(sqlRdId);
+    public static Borrowing getBorrowingById(int id) {
+        String sqlRdId = "SELECT id, bookId, memberId, borrowDate, dueDate, returnDate, status "
+                + "FROM Borrowing WHERE id = ?";
+
+        try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
+             PreparedStatement pstmt = conn.prepareStatement(sqlRdId)) {
+
             pstmt.setInt(1, id);
+
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    System.out.println(rs.getInt(1) + " - "
-                            + rs.getInt(2) + " - "
-                            + rs.getInt(3) + " - "
-                            + rs.getDate(4) + " - "
-                            + rs.getDate(5) + " - "
-                            + rs.getDate(6) + " - "
-                            + rs.getString(7));
-                } else {
-                    System.out.println("Aucun enprunt avec l'id " + id);
+                    // ⚠️ Récupérer les dates brutes d'abord
+                    java.sql.Date sqlBorrow = rs.getDate("borrowDate");
+                    java.sql.Date sqlDue = rs.getDate("dueDate");
+                    java.sql.Date sqlReturn = rs.getDate("returnDate");
+
+                    // ⚠️ Construire et retourner l'objet
+                    return new Borrowing(
+                            rs.getInt("id"),
+                            rs.getInt("bookId"),
+                            rs.getInt("memberId"),
+                            sqlBorrow != null ? sqlBorrow.toLocalDate() : null,
+                            sqlDue != null ? sqlDue.toLocalDate() : null,
+                            sqlReturn != null ? sqlReturn.toLocalDate() : null,
+                            BorrowingStatus.fromString(rs.getString("status")));
                 }
             }
-        } catch (SQLException | ClassNotFoundException e) {
-            System.out.println("Erreur SELECT Borrowing : " + e.getMessage());
-        }
-    }
 
+        } catch (SQLException e) {
+            System.out.println("Erreur getBorrowingById : " + e.getMessage());
+        }
+        return null;   // ⚠️ Retourner null si introuvable
+    }
     public List<Borrowing> getAllBorrowings() {
         List<Borrowing> borrowings = new ArrayList<>();
         String queryRD = "SELECT * From Borrowing";

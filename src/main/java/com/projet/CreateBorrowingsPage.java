@@ -20,6 +20,7 @@ public class CreateBorrowingsPage  extends JPanel{
     private PlaceholderTextField borrowingSearch;
     private DefaultTableModel borrowingModel;
     private Timer borrowingsDebounceTimer;
+
     private static final Color SIDEBAR_ACTIVE = new Color(0x3B, 0x82, 0xF6); // bleu actif
     private static final Color TEXT_DARK = new Color(0x1F, 0x29, 0x37);
     private static final Color TEXT_GRAY = new Color(0x6B, 0x72, 0x80);
@@ -41,6 +42,7 @@ public class CreateBorrowingsPage  extends JPanel{
         add(tableScroll, BorderLayout.CENTER);
     }
 
+
     private void loadBorrowingsIntoModel(List<BorrowingView> borrowings) {
         borrowingModel.setRowCount(0); // ⚠️ booksModel (camelCase)
         for (BorrowingView b : borrowings) {
@@ -59,6 +61,8 @@ public class CreateBorrowingsPage  extends JPanel{
             });
         }
     }
+
+
 
     private JPanel createHeader() {
         JPanel header = new JPanel(new BorderLayout());
@@ -172,7 +176,7 @@ public class CreateBorrowingsPage  extends JPanel{
         borrowingModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return column == 7 || column == 8;
+                return column == 9 || column == 10;
             }
         };
 
@@ -216,14 +220,14 @@ public class CreateBorrowingsPage  extends JPanel{
         table.getColumnModel().getColumn(10).setCellEditor(new DeleteEditor(row -> onDeleteBorrowing(table, row)));
 
         // Largeurs
-        table.getColumnModel().getColumn(1).setPreferredWidth(180);  // Book
-        table.getColumnModel().getColumn(2).setPreferredWidth(180);  // Member
-        table.getColumnModel().getColumn(3).setPreferredWidth(110);  // Borrow Date
-        table.getColumnModel().getColumn(4).setPreferredWidth(110);  // Due Date
-        table.getColumnModel().getColumn(5).setPreferredWidth(110);  // Return Date
-        table.getColumnModel().getColumn(6).setPreferredWidth(100);  // Status
-        table.getColumnModel().getColumn(7).setPreferredWidth(70);   // Edit
-        table.getColumnModel().getColumn(8).setPreferredWidth(70);   // Delete
+        table.getColumnModel().getColumn(3).setPreferredWidth(160);  // Book
+        table.getColumnModel().getColumn(4).setPreferredWidth(160);  // Member
+        table.getColumnModel().getColumn(5).setPreferredWidth(110);  // Borrow Date
+        table.getColumnModel().getColumn(6).setPreferredWidth(110);  // Due Date
+        table.getColumnModel().getColumn(7).setPreferredWidth(110);  // Return Date
+        table.getColumnModel().getColumn(8).setPreferredWidth(100);  // Status
+        table.getColumnModel().getColumn(9).setPreferredWidth(80);   // Edit
+        table.getColumnModel().getColumn(10).setPreferredWidth(85);  // Delete
 
         JScrollPane scroll = new JScrollPane(table);
         scroll.setBorder(BorderFactory.createLineBorder(BORDER_GRAY));
@@ -401,17 +405,24 @@ public class CreateBorrowingsPage  extends JPanel{
         }
     }
     private void onDeleteBorrowing(JTable table, int row) {
-        int memberId = asInt(table.getModel().getValueAt(row, 0));
-        String firstName = table.getModel().getValueAt(row, 1).toString();
+        int borrowingId = asInt(table.getModel().getValueAt(row, 0));
+        String bookTitle = table.getModel().getValueAt(row, 3).toString();
+        String memberName = table.getModel().getValueAt(row, 4).toString();
+
         int confirm = JOptionPane.showConfirmDialog(this,
-                "Supprimer le mebre \"" + firstName + "\" ?",
+                "Supprimer l'emprunt de \"" + bookTitle + "\" par \"" + memberName + "\" ?",
                 "Confirmation", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
 
-        if (confirm == JOptionPane.YES_OPTION && Members.deleteMember(memberId)) {
+        if (confirm != JOptionPane.YES_OPTION) return;
+
+        if (Borrowings.deleteBorrowing(borrowingId)) {
             loadBorrowingsIntoModel(Borrowings.getAllBorrowingsView());
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "Impossible de supprimer cet emprunt.",
+                    "Erreur", JOptionPane.ERROR_MESSAGE);
         }
     }
-
     static class BorrowingStatusRenderer extends DefaultTableCellRenderer {
         @Override
         public Component getTableCellRendererComponent(JTable table, Object value,
