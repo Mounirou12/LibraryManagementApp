@@ -43,11 +43,15 @@ public class CreateBorrowingsPage  extends JPanel{
     private PlaceholderTextField borrowingSearch;
     private DefaultTableModel borrowingModel;
     private Timer borrowingsDebounceTimer;
+    private Runnable onBorrowingAdded;
 
-    private static final Color SIDEBAR_ACTIVE = new Color(0x3B, 0x82, 0xF6); // bleu actif
     private static final Color TEXT_DARK = new Color(0x1F, 0x29, 0x37);
     private static final Color TEXT_GRAY = new Color(0x6B, 0x72, 0x80);
     private static final Color BORDER_GRAY = new Color(0xE5, 0xE7, 0xEB);
+
+    public void setOnBorrowingAdded(Runnable callback) {
+        this.onBorrowingAdded = callback;
+    }
 
     public CreateBorrowingsPage(){
         setLayout(new BorderLayout());
@@ -178,6 +182,7 @@ public class CreateBorrowingsPage  extends JPanel{
             dialog.setVisible(true);
             if (dialog.isSaved()) {
                 loadBorrowingsIntoModel(Borrowings.getAllBorrowingsView());
+                if (onBorrowingAdded != null) onBorrowingAdded.run();
             }
         });
 
@@ -425,6 +430,7 @@ public class CreateBorrowingsPage  extends JPanel{
 
         if (dialog.isSaved()) {
             loadBorrowingsIntoModel(Borrowings.getAllBorrowingsView());
+            if (onBorrowingAdded != null) onBorrowingAdded.run();
         }
     }
     private void onDeleteBorrowing(JTable table, int row) {
@@ -440,6 +446,7 @@ public class CreateBorrowingsPage  extends JPanel{
 
         if (Borrowings.deleteBorrowing(borrowingId)) {
             loadBorrowingsIntoModel(Borrowings.getAllBorrowingsView());
+            if (onBorrowingAdded != null) onBorrowingAdded.run();
         } else {
             JOptionPane.showMessageDialog(this,
                     "Impossible de supprimer cet emprunt.",

@@ -82,20 +82,18 @@ public class Borrowings extends Thread {
             return false;
         }
     }
-
     public static boolean updateBookStatut(int bookId, BookStatus status) {
         String queryUBS = "UPDATE Books SET status = ? WHERE id = ?";
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-                PreparedStatement pstmt = conn.prepareStatement(queryUBS)) {
+             PreparedStatement pstmt = conn.prepareStatement(queryUBS)) {
             pstmt.setString(1, status.name());
             pstmt.setInt(2, bookId);
             return pstmt.executeUpdate() > 0;
         } catch (SQLException e) {
-            System.out.println("Erreur updateBookStatus : " + e.getMessage());
+            System.out.println("Erreur updateBookStatut : " + e.getMessage());
             return false;
         }
     }
-
     public static boolean insertBorrowing(int bookId, int memberId, LocalDate borrowDate, LocalDate dueDate,
             LocalDate returnDate) {
         if (!canBorrow(memberId)) {
@@ -143,7 +141,7 @@ public class Borrowings extends Thread {
     }
 
     public static boolean updateBorrowing(int id, int bookId, int memberId,
-            LocalDate borrowDate, LocalDate dueDate, LocalDate returnDate) {
+                                          LocalDate borrowDate, LocalDate dueDate, LocalDate returnDate) {
 
         // ⚠️ Pas de canBorrow() ici : on modifie un emprunt existant
 
@@ -170,21 +168,29 @@ public class Borrowings extends Thread {
                 + "WHERE id = ?";
 
         try (Connection conn = DriverManager.getConnection(URL, USERNAME, PASSWORD);
-                PreparedStatement pstmt = conn.prepareStatement(queryUp)) {
+             PreparedStatement pstmt = conn.prepareStatement(queryUp)) {
 
             pstmt.setInt(1, bookId);
             pstmt.setInt(2, memberId);
             pstmt.setObject(3, borrowDate);
             pstmt.setObject(4, dueDate);
-            pstmt.setObject(5, returnDate); // peut être null
+            pstmt.setObject(5, returnDate);
             pstmt.setString(6, status.name());
             pstmt.setInt(7, id);
+
             int rows = pstmt.executeUpdate();
+
             if (rows > 0) {
-                updateBookStatut(bookId, BookStatus.DISPONIBLE);
+                // ⚠️ Le statut du livre dépend de returnDate
+                if (returnDate != null) {
+                    updateBookStatut(bookId, BookStatus.DISPONIBLE);   // rendu → disponible
+                } else {
+                    updateBookStatut(bookId, BookStatus.EMPRUNTE);     // en cours → emprunté
+                }
                 return true;
             }
             return false;
+
         } catch (SQLException e) {
             System.out.println("Erreur UPDATE Borrowing : " + e.getMessage());
             return false;
@@ -208,7 +214,7 @@ public class Borrowings extends Thread {
             if (rows > 0) {
                 // 3. Si l'emprunt était en cours, libérer le livre
                 if (borrowing.getReturnDate() == null) {
-                    Borrowings.updateBookStatut(borrowing.getBookId(), BookStatus.DISPONIBLE);
+                    updateBookStatut(borrowing.getBookId(), BookStatus.DISPONIBLE);
                 }
                 return true;
             }

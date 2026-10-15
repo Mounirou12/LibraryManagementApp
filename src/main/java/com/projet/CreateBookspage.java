@@ -34,9 +34,9 @@ public class CreateBookspage  extends JPanel {
         JScrollPane tableScroll = createTable();
         JPanel top = new JPanel();
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
-        top.setBackground(Color.white);
         top.add(createHeader());
         top.add(createToolbar());
+        top.setBackground(Color.white);
 
         add(top, BorderLayout.NORTH);
         add(tableScroll, BorderLayout.CENTER);
@@ -54,6 +54,9 @@ public class CreateBookspage  extends JPanel {
                     "" // Delete
             });
         }
+    }
+    public void refresh() {
+        loadBooksIntoModel(Books.getAllBooks());
     }
 
      private JPanel createHeader() {
@@ -488,6 +491,7 @@ public class CreateBookspage  extends JPanel {
             button.setBackground(isSelected ? table.getSelectionBackground() : Color.WHITE);
             return button;
         }
+
 
         @Override
         public Object getCellEditorValue() {

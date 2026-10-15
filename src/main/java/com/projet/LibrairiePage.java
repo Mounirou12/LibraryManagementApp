@@ -16,11 +16,16 @@ public class LibrairiePage extends JFrame {
     private static final Color SIDEBAR_ACTIVE = new Color(0x3B, 0x82, 0xF6); // bleu actif
     private static final Color TEXT_DARK = new Color(0x1F, 0x29, 0x37);
     private static final Color TEXT_GRAY = new Color(0x6B, 0x72, 0x80);
-    private static final Color BORDER_GRAY = new Color(0xE5, 0xE7, 0xEB);
     private final List<JButton> menuButtons = new ArrayList<>();
     private JButton activeButton;
-    private JPanel contentArea; // la zone qui change
-    private CardLayout cardLayout;
+    private final JPanel contentArea; // la zone qui change
+    private final CardLayout cardLayout;
+
+    CreateBorrowingsPage borrowingsPage ;
+    CreateBookspage booksPage;
+    CreateDashboardPage dashboardPage;
+
+
 
     public LibrairiePage() {
         setTitle("Library Manager-Java");
@@ -29,14 +34,23 @@ public class LibrairiePage extends JFrame {
         setLocationRelativeTo(null);
         setLayout(new BorderLayout());
 
+        borrowingsPage = new CreateBorrowingsPage();
+        booksPage = new CreateBookspage();
+        dashboardPage = new CreateDashboardPage();
+
+        borrowingsPage.setOnBorrowingAdded(()->{
+            booksPage.refresh();
+            dashboardPage.refresh();
+        });
+
         cardLayout = new CardLayout();
         contentArea = new JPanel(cardLayout);
         contentArea.setBackground(Color.WHITE);
 
-        contentArea.add(new CreateDashboardPage(), "dashboard");
-        contentArea.add(new CreateBookspage(), "books");
+        contentArea.add(dashboardPage, "dashboard");
+        contentArea.add(booksPage ,"books");
         contentArea.add(new CreateMembersPage(), "members");
-        contentArea.add(new CreateBorrowingsPage(), "borrowing");
+        contentArea.add(borrowingsPage, "borrowing");
         add(createSidebar(), BorderLayout.WEST);
         add(contentArea, BorderLayout.CENTER);
 
@@ -114,21 +128,6 @@ public class LibrairiePage extends JFrame {
             return;
         cardLayout.show(contentArea, pageKey);
     }
-
-
-    private JTable table;
-
-
-
-
-
-
-
-
-
-
-
-
 
 
     // ---------- MAIN ----------

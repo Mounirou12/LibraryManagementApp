@@ -6,8 +6,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
 
 import java.awt.*;
 import java.util.List;
@@ -50,6 +48,10 @@ public class CreateDashboardPage  extends JPanel{
                     b.getStatus(),
             });
         }
+    }
+
+    public void refresh() {
+        loadDashboardData(Books.getAllBooks());
     }
 
         private JPanel createHeader() {
