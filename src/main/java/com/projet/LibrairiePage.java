@@ -41,7 +41,7 @@ public class LibrairiePage extends JFrame {
         contentArea.setBackground(Color.WHITE);
 
         contentArea.add(createDashboardPage(), "dashboard");
-        contentArea.add(createBooksPage(), "books");
+        contentArea.add(new CreateBookspage(), "books");
         contentArea.add(new CreateMembersPage(), "members");
         contentArea.add(new CreateBorrowingsPage(), "borrowing");
         add(createSidebar(), BorderLayout.WEST);
