@@ -1,4 +1,4 @@
-package com.projet;
+package com.projet.status;
 
 import java.text.Normalizer;
 

@@ -1,4 +1,4 @@
-package com.projet;
+package com.projet.controller;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -9,10 +9,13 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Members extends Thread {
-    private static final String URL = "jdbc:mysql://127.0.0.1:3306/Librairie";
-    private static final String USERNAME = "mounir";
-    private static final String PASSWORD = "agnila10";
+import com.projet.model.Member;
+import com.projet.status.MemberStatus;
+
+public class Members  {
+    private static final String URL = "jdbc:mysql://127.0.0.1:3306/DB";
+    private static final String USERNAME = "USER";
+    private static final String PASSWORD = "PASSWORD";
 
     public static boolean insertMember(String firstName, String lastName, String email, String phone,
             LocalDate membershipDate, MemberStatus status) {
@@ -151,18 +154,5 @@ public class Members extends Thread {
             System.out.println("Erreur recherche : " + e.getMessage());
         }
         return members;
-    }
-
-    @Override
-    public void run() {
-        // insertMember("Vincent", "Kompany", "vincentkompany@email.com",
-        // "+22990875634", LocalDate.of(2023, 1, 1),MemberStatus.SUSPENDU);
-        // insertMember("Amadou", "Diallo", "amadou.diallo@email.com", "+22997000001",
-        // LocalDate.of(2024, 1, 15),MemberStatus.ACTIF);
-        // updateMember(1, "Vincent", "Kompany", "vincentkompany@email.com",
-        // "+22990875634", LocalDate.of(2023, 1, 1), MemberStatus.ACTIF);
-        // deleteMember(6);
-        // getMemberById(8);
-        // getAllMembers();
     }
 }

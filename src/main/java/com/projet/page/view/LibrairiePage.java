@@ -1,4 +1,4 @@
-package com.projet;
+package com.projet.page.view;
 
 import java.awt.BorderLayout;
 import java.awt.CardLayout;
@@ -129,15 +129,4 @@ public class LibrairiePage extends JFrame {
         cardLayout.show(contentArea, pageKey);
     }
 
-
-    // ---------- MAIN ----------
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            try {
-                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-            } catch (Exception ignored) {
-            }
-            new LibrairiePage().setVisible(true);
-        });
-    }
 }

@@ -1,4 +1,4 @@
-package com.projet;
+package com.projet.page.design;
 
 import javax.swing.*;
 import java.awt.*;

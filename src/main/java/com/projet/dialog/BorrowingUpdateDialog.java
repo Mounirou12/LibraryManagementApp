@@ -1,10 +1,17 @@
-package com.projet;
+package com.projet.dialog;
+
+import com.projet.page.design.DatePickerField;
+import com.projet.controller.Books;
+import com.projet.controller.Borrowings;
+import com.projet.controller.Members;
+import com.projet.model.Book;
+import com.projet.model.Borrowing;
+import com.projet.model.Member;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.time.LocalDate;
-import java.util.List;
 
 public class BorrowingUpdateDialog extends JDialog {
 

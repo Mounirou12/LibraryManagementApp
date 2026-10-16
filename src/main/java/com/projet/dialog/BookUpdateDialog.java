@@ -1,4 +1,8 @@
-package com.projet;
+package com.projet.dialog;
+
+import com.projet.controller.Books;
+import com.projet.model.Book;
+import com.projet.status.BookStatus;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

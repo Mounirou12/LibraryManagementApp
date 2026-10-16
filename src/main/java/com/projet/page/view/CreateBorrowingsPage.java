@@ -1,4 +1,11 @@
-package com.projet;
+package com.projet.page.view;
+
+import com.projet.controller.Borrowings;
+import com.projet.dialog.BorrowingDialog;
+import com.projet.dialog.BorrowingUpdateDialog;
+import com.projet.model.Borrowing;
+import com.projet.model.BorrowingView;
+import com.projet.status.BorrowingStatus;
 
 import java.awt.BorderLayout;
 import java.awt.Color;

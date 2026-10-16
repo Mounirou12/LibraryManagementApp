@@ -1,14 +1,18 @@
 package com.projet;
 
 
+import com.projet.page.view.LibrairiePage;
+
+import javax.swing.*;
+
 public class Main {
     public static void main(String[] args) {
-        Books tableBook = new Books();
-        Members tablMembers = new Members();
-        Borrowings tableBorrowing = new Borrowings();
-
-        tableBook.start();
-        tablMembers.start();
-        tableBorrowing.start();
+        SwingUtilities.invokeLater(() -> {
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (Exception ignored) {
+            }
+            new LibrairiePage().setVisible(true);
+        });
     }
 }

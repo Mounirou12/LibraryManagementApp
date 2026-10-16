@@ -1,6 +1,12 @@
-package com.projet;
+package com.projet.page.view;
 
 
+
+import com.projet.controller.Books;
+import com.projet.dialog.BookDialog;
+import com.projet.dialog.BookUpdateDialog;
+import com.projet.model.Book;
+import com.projet.status.BookStatus;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

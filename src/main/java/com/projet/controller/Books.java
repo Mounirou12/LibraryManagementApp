@@ -1,4 +1,4 @@
-package com.projet;
+package com.projet.controller;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -8,10 +8,13 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Books extends Thread {
-    private static final String URL = "jdbc:mysql://127.0.0.1:3306/Librairie";
-    private static final String USERNAME = "mounir";
-    private static final String PASSWORD = "agnila10";
+import com.projet.model.Book;
+import com.projet.status.BookStatus;
+
+public class Books  {    
+    private static final String URL = "jdbc:mysql://127.0.0.1:3306/DB";
+    private static final String USERNAME = "USER";
+    private static final String PASSWORD = "PASSWORD";
 
     public static boolean insertBook(String title, String author, String category, BookStatus status) {
         String queryCR = "INSERT INTO Books (title, author, category, status) VALUES (?,?,?,?)";
@@ -139,21 +142,6 @@ public class Books extends Thread {
             System.out.println("Erreur recherche : " + e.getMessage());
         }
         return books;
-    }
-
-    @Override
-    public void run() {
-        // insertBook("L'Assassin royal", "Robin Hobb", "Fantasy",
-        // BookStatus.DISPONIBLE);
-        // insertBook("1984", "George Orwell", "Science-Fiction", BookStatus.EMPRUNTE);
-        // insertBook("Harry Potter à l''école des sorciers", "J.K. Rowling", "Fantasy",
-        // BookStatus.RESERVE);
-        // updateBook(1,"L'Assassin royal", "Robin Hobb", "Fantasy",
-        // BookStatus.EMPRUNTE);
-        // deleteBook(5);
-        // getMemberById(1);
-        // getAllMembers();
-
     }
 
 }

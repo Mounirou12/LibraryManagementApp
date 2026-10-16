@@ -1,4 +1,6 @@
-package com.projet;
+package com.projet.model;
+
+import com.projet.status.BorrowingStatus;
 
 import java.time.LocalDate;
 

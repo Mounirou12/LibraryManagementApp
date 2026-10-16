@@ -1,6 +1,6 @@
-package com.projet;
+package com.projet.controller;
 
-import java.sql.*;
+import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -9,10 +9,15 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Borrowings extends Thread {
-    private static final String URL = "jdbc:mysql://127.0.0.1:3306/Librairie";
-    private static final String USERNAME = "mounir";
-    private static final String PASSWORD = "agnila10";
+import com.projet.model.Borrowing;
+import com.projet.model.BorrowingView;
+import com.projet.status.BookStatus;
+import com.projet.status.BorrowingStatus;
+
+public class Borrowings {    
+    private static final String URL = "jdbc:mysql://127.0.0.1:3306/DB";
+    private static final String USERNAME = "USER";
+    private static final String PASSWORD = "PASSWORD";
 
     public static boolean canBorrow(int memberId) {
         String sqlRSM = "SELECT status FROM Members WHERE id=?";
@@ -388,21 +393,6 @@ public class Borrowings extends Thread {
             System.out.println("Erreur searchBorrowingsByStatus : " + e.getMessage());
         }
         return borrowings;
-    }
-
-    @Override
-    public void run() {
-        // insertBorrowing(2, 5, LocalDate.of(2024, 02, 10), LocalDate.of(2024, 02,
-        // 10).plusDays(14),
-        // null);
-        // insertBorrowing(1, 2, LocalDate.of(2024, 03, 10), LocalDate.of(2024, 03,
-        // 10).plusDays(14),LocalDate.of(2024, 03, 22));
-        updateBorrowing(8, 2, 5, LocalDate.of(2024, 02, 10), LocalDate.of(2024, 02,
-                10).plusDays(14), LocalDate.of(2024, 02, 22));
-        // deleteBorrowing(1);
-        // getBorrowingById(2);
-        // getAllMembers();
-
     }
 
 }

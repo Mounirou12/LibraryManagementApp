@@ -1,4 +1,10 @@
-package com.projet;
+package com.projet.page.view;
+
+import com.projet.dialog.MemberDialog;
+import com.projet.model.MemberUpdateDialog;
+import com.projet.controller.Members;
+import com.projet.model.Member;
+import com.projet.status.MemberStatus;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;

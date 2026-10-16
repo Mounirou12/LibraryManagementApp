@@ -1,4 +1,6 @@
-package com.projet;
+package com.projet.model;
+
+import com.projet.status.BookStatus;
 
 public class Book {
     private int id;

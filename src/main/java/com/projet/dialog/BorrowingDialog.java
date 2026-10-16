@@ -1,4 +1,13 @@
-package com.projet;
+package com.projet.dialog;
+
+import com.projet.page.design.DatePickerField;
+import com.projet.controller.Books;
+import com.projet.controller.Borrowings;
+import com.projet.controller.Members;
+import com.projet.model.Book;
+import com.projet.model.Member;
+import com.projet.status.BookStatus;
+import com.projet.status.MemberStatus;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;

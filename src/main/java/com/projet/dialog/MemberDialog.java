@@ -1,4 +1,8 @@
-package com.projet;
+package com.projet.dialog;
+
+import com.projet.controller.Members;
+import com.projet.page.design.DatePickerField;
+import com.projet.status.MemberStatus;
 
 import java.awt.*;
 import java.time.LocalDate;
